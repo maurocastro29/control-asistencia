@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProfileController;
@@ -23,5 +24,14 @@ Route::resource('document-types', DocumentTypeController::class);
 
 Route::resource('positions', PositionController::class)
     ->middleware('auth');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/attendance/register', [AttendanceController::class, 'index'])
+        ->name('attendance.register');
+    Route::post('/attendance/search', [AttendanceController::class, 'search'])
+        ->name('attendance.search');
+    Route::post('/attendance/store', [AttendanceController::class, 'store'])
+        ->name('attendance.store');
+});
 
 require __DIR__.'/auth.php';

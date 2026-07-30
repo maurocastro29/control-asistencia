@@ -1,0 +1,20 @@
+<x-app-layout>
+
+    <x-slot name="header">
+        Editar Marcación
+    </x-slot>
+
+    <x-card>
+
+        <form action="{{ route('attendance-records.update', $attendanceRecord) }}" method="POST">
+
+            @csrf
+            @method('PUT')
+
+            @include('attendance-records._form')
+
+        </form>
+
+    </x-card>
+
+</x-app-layout>
