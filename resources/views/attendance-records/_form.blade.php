@@ -4,17 +4,22 @@
 
     <x-form.select name="employee_id" label="Empleado" :options="$employees->pluck('full_name', 'id')" :selected="old('employee_id', $attendanceRecord->employee_id ?? '')" required />
 
-    <x-form.select name="attendance_type_id" label="Tipo de marcación" :options="$attendanceTypes->pluck('name', 'id')" :selected="old('attendance_type_id', $attendanceRecord->attendance_type_id ?? '')" required />
-
-    <x-form.input type="datetime-local" name="attendance_datetime" label="Fecha y hora" :value="old(
-        'attendance_datetime',
-        isset($attendanceRecord)
-            ? $attendanceRecord->attendance_datetime->format('Y-m-d\TH:i')
-            : now()->format('Y-m-d\TH:i'),
+    <x-form.input type="date" name="work_date" label="Fecha" :value="old(
+        'work_date',
+        isset($attendanceRecord) ? $attendanceRecord->work_date->format('Y-m-d') : now()->format('Y-m-d'),
     )" required />
 
+    <x-form.input type="time" name="entry_time" label="Hora de entrada" :value="old('entry_time', $attendanceRecord->entry_time ?? '')" required />
+
+    <x-form.input type="time" name="exit_time" label="Hora de salida" :value="old('exit_time', $attendanceRecord->exit_time ?? '')" required />
+
+    <x-form.input type="number" name="lunch_time" label="Tiempo de almuerzo (Horas)" step="0.5" min="0"
+        :value="old('lunch_time', isset($attendanceRecord) ? $attendanceRecord->lunch_time / 60 : 1)" required />
+
     <div class="md:col-span-2">
+
         <x-form.textarea name="observations" label="Observaciones" :value="old('observations', $attendanceRecord->observations ?? '')" />
+
     </div>
 
 </div>

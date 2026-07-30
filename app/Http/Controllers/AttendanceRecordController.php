@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAttendanceRecordRequest;
 use App\Http\Requests\UpdateAttendanceRecordRequest;
 use App\Models\AttendanceRecord;
-use App\Models\AttendanceType;
 use App\Models\Employee;
+use App\Services\AttendanceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +14,13 @@ use Illuminate\View\View;
 
 class AttendanceRecordController extends Controller
 {
+
+    protected AttendanceService $attendanceService;
+
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -21,7 +28,6 @@ class AttendanceRecordController extends Controller
     {
         $attendanceRecords = AttendanceRecord::with([
                 'employee',
-                'attendanceType',
                 'createdBy',
             ])
             ->orderByDesc('attendance_datetime')
@@ -42,9 +48,6 @@ class AttendanceRecordController extends Controller
                     ->orderBy('first_last_name')
                     ->orderBy('first_name')
                     ->get(),
-                'attendanceTypes' => AttendanceType::where('is_active', true)
-                    ->orderBy('id')
-                    ->get(),
             ]
         );
     }
@@ -55,11 +58,14 @@ class AttendanceRecordController extends Controller
     public function store(StoreAttendanceRecordRequest $request): RedirectResponse
     {
         $data = $request->validated();
+
         $data['created_by'] = Auth::id();
-        AttendanceRecord::create($data);
+
+        $this->attendanceService->create($data);
+
         return redirect()
-                    ->route('attendance-records.index')
-                    ->with('success', 'Marcación registrada correctamente.');
+            ->route('attendance-records.index')
+            ->with('success', 'Jornada creada correctamente.');
     }
 
     /**
@@ -69,7 +75,6 @@ class AttendanceRecordController extends Controller
     {
         $attendanceRecord->load([
             'employee',
-            'attendanceType',
             'createdBy',
         ]);
 
@@ -88,10 +93,7 @@ class AttendanceRecordController extends Controller
                 'employees' => Employee::where('is_active', true)
                     ->orderBy('first_last_name')
                     ->orderBy('first_name')
-                    ->get(),
-                'attendanceTypes' => AttendanceType::where('is_active', true)
-                    ->orderBy('id')
-                    ->get(),
+                    ->get()
             ]
         );
     }
@@ -104,11 +106,14 @@ class AttendanceRecordController extends Controller
         AttendanceRecord $attendanceRecord
     ): RedirectResponse {
 
-        $attendanceRecord->update($request->validated());
+        $this->attendanceService->update(
+            $attendanceRecord,
+            $request->validated()
+        );
 
         return redirect()
-                ->route('attendance-records.index')
-                ->with('success', 'Marcación actualizada correctamente.');
+            ->route('attendance-records.index')
+            ->with('success', 'Jornada actualizada correctamente.');
     }
 
     /**
@@ -118,6 +123,6 @@ class AttendanceRecordController extends Controller
     {
         return redirect()
                     ->route('attendance-records.index')
-                    ->with('error', 'Las marcaciones no pueden eliminarse.');
+                    ->with('error', 'Las Jornadas no pueden eliminarse.');
     }
 }

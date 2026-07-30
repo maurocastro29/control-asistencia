@@ -1,7 +1,7 @@
 <x-app-layout>
 
     <x-slot name="header">
-        Registrar Marcación
+        Registrar Jornada
     </x-slot>
 
     <x-card>

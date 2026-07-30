@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             PositionSeeder::class,
             EmployeeSeeder::class,
-            AttendanceTypeSeeder::class,
         ]);
     }
 }

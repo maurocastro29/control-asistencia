@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAttendanceRecordRequest;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceType;
 use App\Models\Employee;
+use App\Services\AttendanceService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,51 +15,71 @@ use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
+
+    protected AttendanceService $attendanceService;
+
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
     /**
      * Muestra la pantalla de registro de asistencia.
      */
     public function index(): View
     {
         return view('attendance.register', [
-            'attendanceTypes' => AttendanceType::where('is_active', true)
-                ->orderBy('id')
-                ->get(),
-
-            'employee' => null,
+            'employees' => collect(),
+            'selectedEmployee' => null,
         ]);
     }
 
     /**
      * Busca un empleado por número de documento.
      */
-    public function search(Request $request): View|RedirectResponse
+    public function search(Request $request): View
     {
         $request->validate([
-            'document_number' => 'required|string|max:20',
+            'search' => 'required|string|max:100',
         ]);
 
-        $employee = Employee::with([
+        $search = trim($request->search);
+
+        $employees = Employee::with([
                 'department',
                 'position',
                 'documentType',
             ])
-            ->where('document_number', $request->document_number)
             ->where('is_active', true)
-            ->first();
+            ->where(function ($query) use ($search) {
 
-        if (!$employee) {
-            return redirect()
-                ->route('attendance.register')
-                ->withInput()
-                ->with('error', 'No se encontró ningún empleado con ese número de documento.');
-        }
+                $query->where('document_number', 'like', "%{$search}%")
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('middle_name', 'like', "%{$search}%")
+                    ->orWhere('first_last_name', 'like', "%{$search}%")
+                    ->orWhere('second_last_name', 'like', "%{$search}%");
+
+            })
+            ->orderBy('first_last_name')
+            ->orderBy('first_name')
+            ->get();
 
         return view('attendance.register', [
-            'attendanceTypes' => AttendanceType::where('is_active', true)
-                ->orderBy('id')
-                ->get(),
+            'employees' => $employees,
+            'selectedEmployee' => null,
+        ]);
+    }
 
-            'employee' => $employee,
+    public function select(Employee $employee): View
+    {
+        $employee->load([
+            'department',
+            'position',
+            'documentType',
+        ]);
+
+        return view('attendance.register', [
+            'employees' => collect(),
+            'selectedEmployee' => $employee,
         ]);
     }
 
@@ -64,24 +87,19 @@ class AttendanceController extends Controller
     /**
      * Registra la marcación.
      */
-    public function store(Request $request): RedirectResponse
+    /**
+     * Registra una jornada de trabajo.
+     */
+    public function store(StoreAttendanceRecordRequest $request): RedirectResponse
     {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'attendance_type_id' => 'required|exists:attendance_types,id',
-            'observations' => 'nullable|string|max:255',
-        ]);
+        $data = $request->validated();
 
-        AttendanceRecord::create([
-            'employee_id' => $request->employee_id,
-            'attendance_type_id' => $request->attendance_type_id,
-            'attendance_datetime' => now(),
-            'observations' => $request->observations,
-            'created_by' => Auth::id(),
-        ]);
+        $data['created_by'] = Auth::id();
+
+        $this->attendanceService->create($data);
 
         return redirect()
             ->route('attendance.register')
-            ->with('success', 'Marcación registrada correctamente.');
+            ->with('success', 'Jornada registrada correctamente.');
     }
 }

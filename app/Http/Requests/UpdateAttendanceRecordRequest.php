@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAttendanceRecordRequest extends FormRequest
 {
@@ -22,11 +23,40 @@ class UpdateAttendanceRecordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_id' => 'required|exists:employees,id',
-            'attendance_type_id' => 'required|exists:attendance_types,id',
-            'attendance_datetime' => 'required|date',
-            'observations' => 'nullable|string|max:255',
-            'created_by' => 'required|exists:users,id',
+            'employee_id' => [
+                'required',
+                Rule::exists('employees', 'id')->where('is_active', true),
+            ],
+
+            'work_date' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+            ],
+
+            'entry_time' => [
+                'required',
+                'date_format:H:i',
+            ],
+
+            'exit_time' => [
+                'required',
+                'date_format:H:i',
+                'after:entry_time',
+            ],
+
+            'lunch_time' => [
+                'required',
+                'numeric',
+                'min:0',
+                'max:4',
+            ],
+
+            'observations' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
         ];
     }
 }

@@ -1,120 +1,201 @@
 <x-app-layout>
 
     <x-slot name="header">
-        {{ __('Registro de Asistencia') }}
+        <h2 class="text-xl font-semibold text-slate-800">
+            Registro de Asistencia
+        </h2>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    {{-- Mensajes --}}
+    @if (session('success'))
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+            {{ session('success') }}
+        </div>
+    @endif
 
-        @if (session('success'))
-            <div class="rounded-lg border border-green-300 bg-green-100 px-4 py-3 text-green-800">
-                {{ session('success') }}
-            </div>
-        @endif
+    @if (session('error'))
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
 
-        @if (session('error'))
-            <div class="rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-red-800">
-                {{ session('error') }}
-            </div>
-        @endif
+    {{-- ==========================
+        BUSCAR EMPLEADO
+    =========================== --}}
+    <x-card>
 
-        {{-- Buscar empleado --}}
-        <x-card>
+        <form action="{{ route('attendance.search') }}" method="POST">
 
-            <form method="POST" action="{{ route('attendance.search') }}">
-                @csrf
+            @csrf
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
 
-                    <div class="md:col-span-3">
+                <div class="md:col-span-4">
 
-                        <x-form.input name="document_number" label="Número de documento" :value="old('document_number')" required
-                            autofocus />
-
-                    </div>
-
-                    <div>
-
-                        <x-button.primary type="submit" class="w-full">
-
-                            Buscar
-
-                        </x-button.primary>
-
-                    </div>
+                    <x-form.input name="search" label="Buscar empleado" placeholder="Documento, nombre o apellido..."
+                        :value="old('search')" required />
 
                 </div>
 
-            </form>
+                <div>
 
-        </x-card>
+                    <x-button.primary type="submit" class="w-full">
 
-        @if ($employee)
-            {{-- Información del empleado --}}
+                        Buscar
+
+                    </x-button.primary>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </x-card>
+
+    {{-- ==========================
+        RESULTADOS
+    =========================== --}}
+    @if (isset($employees) && $employees->count())
+
+        <div class="mt-6">
+
             <x-card>
 
-                <h2 class="text-lg font-semibold mb-4">
-                    Información del empleado
-                </h2>
+                <h3 class="text-lg font-semibold mb-4">
+                    Resultados de la búsqueda
+                </h3>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <x-table>
 
-                    <div>
-                        <strong>Documento</strong><br>
-                        {{ $employee->document_number }}
-                    </div>
+                    <x-slot name="head">
 
-                    <div>
-                        <strong>Nombre</strong><br>
-                        {{ $employee->full_name }}
-                    </div>
+                        <tr>
+                            <th>Documento</th>
+                            <th>Empleado</th>
+                            <th>Departamento</th>
+                            <th>Cargo</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
 
-                    <div>
-                        <strong>Departamento</strong><br>
-                        {{ $employee->department->name }}
-                    </div>
+                    </x-slot>
 
-                    <div>
-                        <strong>Cargo</strong><br>
-                        {{ $employee->position->name }}
-                    </div>
+                    <x-slot name="body">
 
-                </div>
+                        @foreach ($employees as $employee)
+                            <tr>
+
+                                <td>
+                                    {{ $employee->document_number }}
+                                </td>
+
+                                <td>
+                                    {{ $employee->full_name }}
+                                </td>
+
+                                <td>
+                                    {{ $employee->department->name }}
+                                </td>
+
+                                <td>
+                                    {{ $employee->position->name }}
+                                </td>
+
+                                <td class="text-center">
+
+                                    <x-button.primary href="{{ route('attendance.select', $employee) }}">
+
+                                        Seleccionar
+
+                                    </x-button.primary>
+
+                                </td>
+
+                            </tr>
+                        @endforeach
+
+                    </x-slot>
+
+                </x-table>
 
             </x-card>
 
-            {{-- Registrar marcación --}}
+        </div>
+
+    @endif
+
+    {{-- ==========================
+        FORMULARIO DE REGISTRO
+    =========================== --}}
+    @if (isset($selectedEmployee) && $selectedEmployee)
+        <div class="mt-6">
+
             <x-card>
 
-                <form method="POST" action="{{ route('attendance.store') }}">
+                <h3 class="text-lg font-semibold mb-6">
+                    Registrar Jornada
+                </h3>
+
+                <form action="{{ route('attendance.store') }}" method="POST">
 
                     @csrf
 
-                    <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+                    <input type="hidden" name="employee_id" value="{{ $selectedEmployee->id }}">
 
-                    <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        <x-form.select name="attendance_type_id" label="Tipo de marcación" :options="$attendanceTypes->pluck('name', 'id')" required />
+                        <x-form.input label="Empleado" :value="$selectedEmployee->full_name" disabled />
 
-                        <x-form.textarea name="observations" label="Observaciones" :value="old('observations')" />
+                        <x-form.input label="Documento" :value="$selectedEmployee->document_number" disabled />
 
-                        <div class="flex justify-end">
+                        <x-form.input label="Departamento" :value="$selectedEmployee->department->name" disabled />
 
-                            <x-button.primary type="submit">
+                        <x-form.input label="Cargo" :value="$selectedEmployee->position->name" disabled />
 
-                                Registrar Marcación
+                        <x-form.input type="date" name="work_date" label="Fecha" :value="old('work_date', now()->format('Y-m-d'))" required />
 
-                            </x-button.primary>
+                        <x-form.input type="time" name="entry_time" label="Hora de entrada" :value="old('entry_time')"
+                            required />
+
+                        <x-form.input type="time" name="exit_time" label="Hora de salida" :value="old('exit_time')"
+                            required />
+
+                        <x-form.input type="number" name="lunch_time" label="Tiempo de almuerzo (Horas)" step="0.5"
+                            min="0" :value="old('lunch_time', 1)" required />
+
+                        <div class="md:col-span-2">
+
+                            <x-form.textarea name="observations" label="Observaciones">
+
+                                {{ old('observations') }}
+
+                            </x-form.textarea>
 
                         </div>
+
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+
+                        <x-button.secondary href="{{ route('attendance.register') }}">
+
+                            Cancelar
+
+                        </x-button.secondary>
+
+                        <x-button.primary type="submit">
+
+                            Registrar Jornada
+
+                        </x-button.primary>
 
                     </div>
 
                 </form>
 
             </x-card>
-        @endif
 
-    </div>
+        </div>
+    @endif
 
 </x-app-layout>

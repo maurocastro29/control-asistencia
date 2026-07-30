@@ -34,4 +34,15 @@ Route::middleware('auth')->group(function () {
         ->name('attendance.store');
 });
 
+Route::prefix('attendance')->name('attendance.')->group(function () {
+    Route::get('/register', [AttendanceController::class, 'index'])
+        ->name('register');
+    Route::post('/search', [AttendanceController::class, 'search'])
+        ->name('search');
+    Route::get('/select/{employee}', [AttendanceController::class, 'select'])
+        ->name('select');
+    Route::post('/store', [AttendanceController::class, 'store'])
+        ->name('store');
+});
+
 require __DIR__.'/auth.php';

@@ -1,7 +1,7 @@
 <x-app-layout>
 
     <x-slot name="header">
-        Editar Marcación
+        Editar Jornada
     </x-slot>
 
     <x-card>

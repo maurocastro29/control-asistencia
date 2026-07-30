@@ -19,21 +19,24 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            $table->foreignId('attendance_type_id')
-                ->constrained()
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
+            $table->date('work_date');
 
-            $table->dateTime('attendance_datetime');
+            $table->time('entry_time');
 
-            $table->string('observations', 255)->nullable();
+            $table->time('exit_time');
+
+            $table->unsignedSmallInteger('lunch_time');
+
+            $table->text('observations')->nullable();
 
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            $table->timestamps();
+            $table->unique(['employee_id', 'work_date']);
+
+            $table->timestamps();            
         });
     }
 

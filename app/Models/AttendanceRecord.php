@@ -13,8 +13,10 @@ class AttendanceRecord extends Model
 
     protected $fillable = [
         'employee_id',
-        'attendance_type_id',
-        'attendance_datetime',
+        'work_date',
+        'entry_time',
+        'exit_time',
+        'lunch_time',
         'observations',
         'created_by',
     ];
@@ -22,18 +24,16 @@ class AttendanceRecord extends Model
     protected function casts(): array
     {
         return [
-            'attendance_datetime' => 'datetime',
+            'work_date' => 'date',
+            'entry_time' => 'datetime:H:i',
+            'exit_time' => 'datetime:H:i',
+            'lunch_time' => 'integer',
         ];
     }
 
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
-    }
-
-    public function attendanceType(): BelongsTo
-    {
-        return $this->belongsTo(AttendanceType::class);
     }
 
     public function createdBy(): BelongsTo
