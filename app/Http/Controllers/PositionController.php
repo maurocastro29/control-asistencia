@@ -13,8 +13,8 @@ class PositionController extends Controller
      */
     public function index()
     {
-        $documentTypes = Position::orderBy('name')->paginate(10);
-        return view('positions.index', compact('documentTypes'));
+        $positions = Position::orderBy('name')->paginate(10);
+        return view('positions.index', compact('positions'));
     }
 
     /**

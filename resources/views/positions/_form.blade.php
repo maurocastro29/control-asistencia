@@ -2,7 +2,7 @@
 
     <x-form.input name="name" label="Nombre" :value="$position->name ?? ''" required />
 
-    <x-form.input name="abbreviation" label="Abreviatura" :value="$position->abbreviation ?? ''" required />
+    <x-form.input name="abbreviation" label="Descripción" :value="$position->description ?? ''" required />
 
     <x-form.textarea name="description" label="Descripción" :value="$position->description ?? ''" />
 

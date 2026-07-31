@@ -25,7 +25,7 @@
                     </x-table.th>
 
                     <x-table.th>
-                        Abreviatura
+                        Descripción
                     </x-table.th>
 
                     <x-table.th class="text-center">
@@ -50,7 +50,7 @@
                         </x-table.td>
 
                         <x-table.td>
-                            {{ $position->abbreviation }}
+                            {{ $position->description }}
                         </x-table.td>
 
                         <x-table.td class="text-center">

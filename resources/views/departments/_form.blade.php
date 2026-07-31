@@ -2,7 +2,7 @@
 
     <x-form.input name="name" label="Nombre" :value="$department->name ?? ''" required />
 
-    <x-form.input name="abbreviation" label="Abreviatura" :value="$department->abbreviation ?? ''" required />
+    <x-form.input name="abbreviation" label="Descripción" :value="$department->description ?? ''" required />
 
     <x-form.textarea name="description" label="Descripción" :value="$department->description ?? ''" />
 

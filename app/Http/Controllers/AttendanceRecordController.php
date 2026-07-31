@@ -15,12 +15,11 @@ use Illuminate\View\View;
 class AttendanceRecordController extends Controller
 {
 
-    protected AttendanceService $attendanceService;
-
-    public function __construct(AttendanceService $attendanceService)
+    public function __construct(private readonly AttendanceService $attendanceService)
     {
         $this->attendanceService = $attendanceService;
     }
+
     /**
      * Display a listing of the resource.
      */

@@ -13,8 +13,8 @@ class DepartmentController extends Controller
      */
     public function index()
     {
-        $documentTypes = Department::orderBy('name')->paginate(10);
-        return view('departments.index', compact('documentTypes'));
+        $departments = Department::orderBy('name')->paginate(10);
+        return view('departments.index', compact('departments'));
     }
 
     /**
@@ -30,10 +30,16 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        Department::create($request->validated());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        Department::create($validated);
+
         return redirect()
             ->route('departments.index')
-            ->with('success', 'Tipo de documento creado correctamente.');
+            ->with('success', 'Departamento creado correctamente.');
     }
 
     /**

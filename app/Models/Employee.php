@@ -68,4 +68,10 @@ class Employee extends Model
             ),
         );
     }
+
+    public function workSchedule(): BelongsTo
+    {
+        return $this->belongsTo(WorkSchedule::class);
+    }
+
 }

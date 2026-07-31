@@ -1,18 +1,17 @@
 <x-app-layout>
 
-    <x-layout.page-header title="Tipos de Documento" subtitle="Administración de los tipos de documento">
+    <div class="m-6 p-6 bg-white rounded-lg shadow">
+        <x-layout.page-header class="m-6" title="Tipos de Documento"
+            subtitle="Administración de los tipos de documento">
+            <x-slot:actions>
+                <x-button.primary :href="route('document-types.create')">
+                    Nuevo Tipo de Documento
+                </x-button.primary>
+            </x-slot:actions>
+        </x-layout.page-header>
+    </div>
 
-        <x-slot:actions>
-
-            <x-button.primary :href="route('document-types.create')">
-                Nuevo Tipo de Documento
-            </x-button.primary>
-
-        </x-slot:actions>
-
-    </x-layout.page-header>
-
-    <x-layout.card>
+    <x-layout.card class="m-6">
 
         <x-table.table>
 

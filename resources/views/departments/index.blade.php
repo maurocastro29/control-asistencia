@@ -12,7 +12,7 @@
 
     </x-layout.page-header>
 
-    <x-layout.card>
+    <x-layout.card class="m-6">
 
         <x-table.table>
 
@@ -25,7 +25,7 @@
                     </x-table.th>
 
                     <x-table.th>
-                        Abreviatura
+                        Descripción
                     </x-table.th>
 
                     <x-table.th class="text-center">
@@ -50,7 +50,7 @@
                         </x-table.td>
 
                         <x-table.td>
-                            {{ $department->abbreviation }}
+                            {{ $department->description }}
                         </x-table.td>
 
                         <x-table.td class="text-center">
