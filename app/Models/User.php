@@ -74,4 +74,16 @@ class User extends Authenticatable
             ),
         );
     }
+
+    protected function shortName(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => "{$this->first_name} {$this->first_last_name}",
+        );
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 }

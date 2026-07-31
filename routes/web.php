@@ -7,6 +7,10 @@ use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -123,7 +127,7 @@ Route::middleware('auth')->group(function () {
     |
     */
 
-    /*
+    
     Route::prefix('reports')
         ->name('reports.')
         ->group(function () {
@@ -132,8 +136,16 @@ Route::middleware('auth')->group(function () {
                 ->name('attendance');
 
         });
-    */
+    
+    /*
+|--------------------------------------------------------------------------
+| Administration
+|--------------------------------------------------------------------------
+*/
 
+    Route::resource('users', UserController::class);
+    Route::resource('roles', RoleController::class);
+    Route::resource('settings', SettingController::class);
 });
 
 require __DIR__.'/auth.php';

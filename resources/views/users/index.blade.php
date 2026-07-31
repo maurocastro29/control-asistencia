@@ -1,10 +1,11 @@
 <x-app-layout>
-    <x-layout.page-header title="Empleados" subtitle="Administración de los empleados">
+
+    <x-layout.page-header title="Usuarios" subtitle="Administración de los usuarios del sistema">
 
         <x-slot:actions>
 
-            <x-button.primary :href="route('employees.create')">
-                Nuevo Empleado
+            <x-button.primary :href="route('users.create')">
+                Nuevo Usuario
             </x-button.primary>
 
         </x-slot:actions>
@@ -20,7 +21,7 @@
                 <tr>
 
                     <x-table.th>
-                        Documento
+                        Usuario
                     </x-table.th>
 
                     <x-table.th>
@@ -28,22 +29,18 @@
                     </x-table.th>
 
                     <x-table.th>
-                        Departamento
+                        Rol
                     </x-table.th>
 
                     <x-table.th>
-                        Cargo
-                    </x-table.th>
-
-                    <x-table.th>
-                        Horario
+                        Último acceso
                     </x-table.th>
 
                     <x-table.th class="text-center">
                         Estado
                     </x-table.th>
 
-                    <x-table.th class="text-center w-48">
+                    <x-table.th class="text-center w-52">
                         Acciones
                     </x-table.th>
 
@@ -53,43 +50,28 @@
 
             <x-table.body>
 
-                @forelse($employees as $employee)
+                @forelse($users as $user)
                     <x-table.row>
 
                         <x-table.td>
-
-                            {{ $employee->documentType->abbreviation }}
-                            {{ $employee->document_number }}
-
+                            {{ $user->username }}
                         </x-table.td>
 
                         <x-table.td>
-
-                            {{ $employee->full_name }}
-
+                            {{ $user->full_name }}
                         </x-table.td>
 
                         <x-table.td>
-
-                            {{ $employee->department?->name }}
-
+                            {{ $user->role->name }}
                         </x-table.td>
 
                         <x-table.td>
-
-                            {{ $employee->position?->name }}
-
-                        </x-table.td>
-
-                        <x-table.td>
-
-                            {{ $employee->workSchedule?->name ?? 'Sin asignar' }}
-
+                            {{ $user->last_login_at?->format('d/m/Y H:i') ?? 'Nunca' }}
                         </x-table.td>
 
                         <x-table.td class="text-center">
 
-                            <x-table.badge :active="$employee->is_active" />
+                            <x-table.badge :active="$user->is_active" />
 
                         </x-table.td>
 
@@ -97,13 +79,13 @@
 
                             <x-table.actions>
 
-                                <x-button.secondary :href="route('employees.show', $employee)">
+                                <x-button.secondary :href="route('users.show', $user)">
 
                                     Ver
 
                                 </x-button.secondary>
 
-                                <x-button.secondary :href="route('employees.edit', $employee)">
+                                <x-button.secondary :href="route('users.edit', $user)">
 
                                     Editar
 
@@ -117,7 +99,7 @@
 
                 @empty
 
-                    <x-table.empty :colspan="7" message="No existen empleados registrados." />
+                    <x-table.empty :colspan="6" message="No existen usuarios registrados." />
                 @endforelse
 
             </x-table.body>
@@ -126,9 +108,10 @@
 
         <div class="mt-6">
 
-            {{ $employees->links() }}
+            {{ $users->links() }}
 
         </div>
 
     </x-layout.card>
+
 </x-app-layout>
