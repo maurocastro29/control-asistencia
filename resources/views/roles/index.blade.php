@@ -1,5 +1,6 @@
 <x-app-layout>
-    <x-layout.page-header title="Empleados" subtitle="Administración de los empleados">
+
+    <x-layout.page-header title="Roles" subtitle="Administración de los roles del sistema">
 
         <x-slot:actions>
 
@@ -10,7 +11,6 @@
         </x-slot:actions>
 
     </x-layout.page-header>
-
 
     <x-layout.card>
 
@@ -25,14 +25,14 @@
                     </x-table.th>
 
                     <x-table.th>
-                        descripcion
+                        Descripción
                     </x-table.th>
 
                     <x-table.th class="text-center">
                         Estado
                     </x-table.th>
 
-                    <x-table.th class="text-center w-48">
+                    <x-table.th class="text-center w-40">
                         Acciones
                     </x-table.th>
 
@@ -46,11 +46,15 @@
                     <x-table.row>
 
                         <x-table.td>
+
                             {{ $role->name }}
+
                         </x-table.td>
 
                         <x-table.td>
+
                             {{ $role->description }}
+
                         </x-table.td>
 
                         <x-table.td class="text-center">
@@ -62,25 +66,40 @@
                         <x-table.td>
 
                             <x-table.actions>
-                                <a href="{{ route('roles.edit', $role) }}" class="text-blue-500 hover:text-blue-700">
+
+                                <x-button.secondary :href="route('roles.show', $role)">
+
+                                    Ver
+
+                                </x-button.secondary>
+
+                                <x-button.secondary :href="route('roles.edit', $role)">
+
                                     Editar
-                                </a>
+
+                                </x-button.secondary>
+
                             </x-table.actions>
 
                         </x-table.td>
 
                     </x-table.row>
+
                 @empty
-                    <tr>
-                        <td colspan="4" class="text-center py-4">
-                            No hay usuarios registrados.
-                        </td>
-                    </tr>
+
+                    <x-table.empty :colspan="4" message="No existen roles registrados." />
                 @endforelse
 
             </x-table.body>
 
         </x-table.table>
+
+        <div class="mt-6">
+
+            {{ $roles->links() }}
+
+        </div>
+
     </x-layout.card>
 
 </x-app-layout>

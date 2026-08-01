@@ -1,16 +1,20 @@
-@props(['name', 'label', 'value' => ''])
+@props(['name', 'label', 'value' => '', 'required' => false])
 
 <div>
 
-    <label class="block mb-2 text-sm font-medium">
+    <label for="{{ $name }}" class="block mb-2 text-sm font-medium text-gray-700">
 
         {{ $label }}
 
+        @if ($required)
+            <span class="text-red-500">*</span>
+        @endif
+
     </label>
 
-    <textarea name="{{ $name }}" rows="4"
+    <textarea id="{{ $name }}" name="{{ $name }}" rows="4" @required($required)
         {{ $attributes->merge([
-            'class' => 'w-full rounded-lg border-slate-300',
+            'class' => 'w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
         ]) }}>{{ old($name, $value) }}</textarea>
 
     @error($name)
