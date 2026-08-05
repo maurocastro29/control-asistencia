@@ -22,10 +22,6 @@
             Usuarios
         </a>
 
-        <a href="{{ route('roles.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Roles
-        </a>
-
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Catálogos
         </div>

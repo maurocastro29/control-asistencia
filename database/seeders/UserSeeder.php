@@ -16,9 +16,7 @@ class UserSeeder extends Seeder
     {
         $administratorRole = Role::where('name', 'Administrador')->first();
 
-        User::create([
-            'role_id' => $administratorRole->id,
-
+        $user = User::create([
             'username' => 'admin',
 
             'first_name' => 'Administrador',
@@ -31,5 +29,10 @@ class UserSeeder extends Seeder
 
             'is_active' => true,
         ]);
+
+        $user->assignRole($administratorRole);
+
+        // También podrías usar:
+        // $user->assignRole('Administrador');
     }
 }

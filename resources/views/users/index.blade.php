@@ -29,10 +29,6 @@
                     </x-table.th>
 
                     <x-table.th>
-                        Rol
-                    </x-table.th>
-
-                    <x-table.th>
                         Último acceso
                     </x-table.th>
 
@@ -59,10 +55,6 @@
 
                         <x-table.td>
                             {{ $user->full_name }}
-                        </x-table.td>
-
-                        <x-table.td>
-                            {{ $user->role->name }}
                         </x-table.td>
 
                         <x-table.td>

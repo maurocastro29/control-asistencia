@@ -28,12 +28,6 @@ class UpdateUserRequest extends FormRequest
         $user = $this->route('user');
 
         return [
-
-            'role_id' => [
-                'required',
-                'exists:roles,id',
-            ],
-
             'username' => [
                 'required',
                 'string',

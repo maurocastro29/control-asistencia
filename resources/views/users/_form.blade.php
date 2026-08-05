@@ -2,9 +2,6 @@
 
 <div class="grid grid-cols-2 gap-6">
 
-    <x-form.select name="role_id" label="Rol" :options="$roles" optionValue="id" optionLabel="name" :selected="old('role_id', $user->role_id ?? '')"
-        required />
-
     <x-form.input name="username" label="Usuario" :value="old('username', $user->username ?? '')" required />
 
     <x-form.input name="first_name" label="Primer nombre" :value="old('first_name', $user->first_name ?? '')" required />

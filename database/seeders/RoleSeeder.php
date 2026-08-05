@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
@@ -13,21 +15,48 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        Role::insert([
-            [
-                'name' => 'Administrador',
-                'description' => 'Acceso total al sistema',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $roles = [
+
+            'Administrador' => Permission::pluck('name')->toArray(),
+
+            'Supervisor' => [
+                'dashboard.view',
+
+                'employees.view',
+                'employees.create',
+                'employees.edit',
+
+                'attendance.view',
+                'attendance.register',
+                'attendance.edit',
+
+                'reports.view',
+                'reports.export',
             ],
-            [
-                'name' => 'Operador',
-                'description' => 'Usuario operativo del sistema',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+
+            'Consulta' => [
+                'dashboard.view',
+
+                'employees.view',
+
+                'attendance.view',
+
+                'reports.view',
             ],
-        ]);
+
+        ];
+
+        foreach ($roles as $roleName => $permissions) {
+
+            $role = Role::firstOrCreate([
+                'name' => $roleName,
+                'guard_name' => 'web',
+            ]);
+
+            $role->syncPermissions($permissions);
+
+        }
     }
 }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -16,8 +15,7 @@ class UserController extends Controller
      */
     public function index(): View
     {
-        $users = User::with('role')
-            ->orderBy('first_name')
+        $users = User::orderBy('first_name')
             ->orderBy('first_last_name')
             ->paginate(10);
 
@@ -29,11 +27,7 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        $roles = Role::active()
-            ->orderBy('name')
-            ->get();
-
-        return view('users.create', compact('roles'));
+        return view('users.create');
     }
 
     /**
@@ -53,7 +47,7 @@ class UserController extends Controller
      */
     public function show(User $user): View
     {
-        $user->load('role');
+        $user->load('positions');
 
         return view('users.show', compact('user'));
     }
@@ -63,11 +57,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
-        $roles = Role::where('is_active', true)
-            ->orderBy('name')
-            ->get();
-
-        return view('users.edit', compact('user', 'roles'));
+        return view('users.edit', compact('user'));
     }
 
     /**
