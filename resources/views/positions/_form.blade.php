@@ -2,8 +2,6 @@
 
     <x-form.input name="name" label="Nombre" :value="$position->name ?? ''" required />
 
-    <x-form.input name="abbreviation" label="Descripción" :value="$position->description ?? ''" required />
-
     <x-form.textarea name="description" label="Descripción" :value="$position->description ?? ''" />
 
     <x-form.switch name="is_active" label="Activo" :checked="$position->is_active ?? true" />

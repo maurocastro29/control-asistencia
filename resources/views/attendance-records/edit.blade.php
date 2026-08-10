@@ -1,10 +1,10 @@
 <x-app-layout>
 
-    <x-slot name="header">
-        Editar Jornada
-    </x-slot>
+    <x-layout.page-header title="Editar Jornada" subtitle="Actualizar la información de la jornada del empleado">
 
-    <x-card>
+    </x-layout.page-header>
+
+    <x-layout.card>
 
         <form action="{{ route('attendance-records.update', $attendanceRecord) }}" method="POST">
 
@@ -15,6 +15,6 @@
 
         </form>
 
-    </x-card>
+    </x-layout.card>
 
 </x-app-layout>

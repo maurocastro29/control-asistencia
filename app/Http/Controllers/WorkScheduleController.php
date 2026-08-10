@@ -8,8 +8,8 @@ use App\Models\WeekDay;
 use App\Models\WorkSchedule;
 use App\Services\WorkScheduleService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Routing\Controller;
 
 class WorkScheduleController extends Controller
 {
@@ -18,6 +18,18 @@ class WorkScheduleController extends Controller
     public function __construct(WorkScheduleService $workScheduleService)
     {
         $this->workScheduleService = $workScheduleService;
+
+        $this->middleware('permission:work-schedules.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:work-schedules.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:work-schedules.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:work-schedules.delete')
+            ->only('destroy');
     }
 
     /**

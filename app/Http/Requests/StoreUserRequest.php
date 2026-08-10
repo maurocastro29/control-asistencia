@@ -67,6 +67,11 @@ class StoreUserRequest extends FormRequest
                 'boolean',
             ],
 
+            'role' => [
+                'required', 
+                'exists:roles,name'
+            ],
+
         ];
     }
 

@@ -2,12 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Requests\UpdateDocumentTypeRequest;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class DepartmentController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:departments.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:departments.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:departments.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:departments.delete')
+            ->only('destroy');
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -61,7 +79,7 @@ class DepartmentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateDocumentTypeRequest $request, Department $department)
+    public function update(UpdateDepartmentRequest $request, Department $department)
     {
         $department->update($request->validated());
 

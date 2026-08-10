@@ -12,7 +12,7 @@
 
             <div class="bg-white shadow rounded-lg">
 
-                <div class="p-6 border-b flex items-center justify-between">
+                <div class="p-6 flex items-center justify-between">
 
                     <h3 class="text-lg font-semibold">
                         Horarios registrados
@@ -26,100 +26,88 @@
                     </a>
 
                 </div>
+                <div class="rounded-xl mx-6">
+                    <x-table.table>
 
-                <x-table>
-
-                    <x-slot name="head">
-
-                        <tr>
-
-                            <x-table.th>Nombre</x-table.th>
-
-                            <x-table.th>Descripción</x-table.th>
-
-                            <x-table.th>Estado</x-table.th>
-
-                            <x-table.th>Empleados</x-table.th>
-
-                            <x-table.th class="text-right">
-                                Acciones
-                            </x-table.th>
-
-                        </tr>
-
-                    </x-slot>
-
-                    <x-slot name="body">
-
-                        @forelse($workSchedules as $schedule)
-                            <tr>
-
-                                <x-table.td>
-
-                                    {{ $schedule->name }}
-
-                                </x-table.td>
-
-                                <x-table.td>
-
-                                    {{ $schedule->description }}
-
-                                </x-table.td>
-
-                                <x-table.td>
-
-                                    @if ($schedule->is_active)
-                                        <span class="text-green-600">
-                                            Activo
-                                        </span>
-                                    @else
-                                        <span class="text-red-600">
-                                            Inactivo
-                                        </span>
-                                    @endif
-
-                                </x-table.td>
-
-                                <x-table.td>
-
-                                    {{ $schedule->employees_count }}
-
-                                </x-table.td>
-
-                                <x-table.td class="text-right space-x-2">
-
-                                    <a href="{{ route('work-schedules.show', $schedule) }}" class="text-blue-600">
-
-                                        Ver
-
-                                    </a>
-
-                                    <a href="{{ route('work-schedules.edit', $schedule) }}" class="text-indigo-600">
-
-                                        Editar
-
-                                    </a>
-
-                                </x-table.td>
-
-                            </tr>
-
-                        @empty
+                        <x-table.head>
 
                             <tr>
 
-                                <td colspan="5" class="text-center py-8">
+                                <x-table.th>
+                                    Nombre
+                                </x-table.th>
 
-                                    No existen horarios registrados.
+                                <x-table.th>
+                                    Descripción
+                                </x-table.th>
 
-                                </td>
+                                <x-table.th>
+                                    Estado
+                                </x-table.th>
+
+                                <x-table.th>
+                                    Empleados
+                                </x-table.th>
+
+                                <x-table.th class="text-right">
+                                    Acciones
+                                </x-table.th>
 
                             </tr>
-                        @endforelse
 
-                    </x-slot>
+                        </x-table.head>
 
-                </x-table>
+                        <x-table.body>
+
+                            @forelse($workSchedules as $schedule)
+                                <x-table.row>
+
+                                    <x-table.td>
+                                        {{ $schedule->name }}
+                                    </x-table.td>
+
+                                    <x-table.td>
+                                        {{ $schedule->description ?? 'Sin descripción' }}
+                                    </x-table.td>
+
+                                    <x-table.td>
+
+                                        <x-table.badge :active="$schedule->is_active" />
+
+                                    </x-table.td>
+
+                                    <x-table.td>
+                                        {{ $schedule->employees_count }}
+                                    </x-table.td>
+
+                                    <x-table.td class="text-right">
+
+                                        <x-table.actions>
+
+                                            <x-button.secondary :href="route('work-schedules.show', $schedule)">
+                                                Ver
+                                            </x-button.secondary>
+
+                                            <x-button.secondary :href="route('work-schedules.edit', $schedule)">
+                                                Editar
+                                            </x-button.secondary>
+
+                                        </x-table.actions>
+
+                                    </x-table.td>
+
+                                </x-table.row>
+
+                            @empty
+
+                                <x-table.empty :colspan="5" message="No existen horarios registrados." />
+                            @endforelse
+
+                        </x-table.body>
+
+                    </x-table.table>
+                </div>
+
 
                 <div class="p-6">
 

@@ -1,20 +1,17 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-    <x-form.select name="document_type_id" label="Tipo de documento" required>
-
-        <option value="">
-            Seleccione...
-        </option>
-
-        @foreach ($documentTypes as $documentType)
-            <option value="{{ $documentType->id }}" @selected(old('document_type_id', $employee->document_type_id ?? '') == $documentType->id)>
-
-                {{ $documentType->name }}
-
-            </option>
-        @endforeach
-
-    </x-form.select>
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-300 rounded p-4 mb-4">
+            <ul>
+                @foreach ($errors->messages() as $field => $messages)
+                    <li>
+                        <strong>{{ $field }}</strong>:
+                        {{ implode(', ', $messages) }}
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    <x-form.select name="document_type_id" label="Tipo de documento" :options="$documentTypes" :selected="old('document_type_id', $employee->document_type_id ?? null)" required />
 
     <x-form.input name="document_number" label="Número de documento" :value="old('document_number', $employee->document_number ?? '')" required />
 
@@ -26,69 +23,17 @@
 
     <x-form.input name="second_last_name" label="Segundo apellido" :value="old('second_last_name', $employee->second_last_name ?? '')" />
 
-    <x-form.select name="department_id" label="Departamento" required>
+    <x-form.input type="date" name="hire_date" label="Fecha de ingreso" :value="old('hire_date', isset($employee) ? optional($employee->hire_date)->format('Y-m-d') : '')" required />
 
-        <option value="">
-            Seleccione...
-        </option>
+    <x-form.select name="department_id" label="Departamento" :options="$departments" :selected="old('department_id', $employee->department_id ?? null)" required />
 
-        @foreach ($departments as $department)
-            <option value="{{ $department->id }}" @selected(old('department_id', $employee->department_id ?? '') == $department->id)>
+    <x-form.select name="position_id" label="Cargo" :options="$positions" :selected="old('position_id', $employee->position_id ?? null)" required />
 
-                {{ $department->name }}
+    <x-form.select name="work_schedule_id" label="Horario laboral" :options="$workSchedules" :selected="old('work_schedule_id', $employee->work_schedule_id ?? null)"
+        placeholder="Sin horario asignado" />
 
-            </option>
-        @endforeach
+    <x-form.switch name="is_active" label="Activo" :checked="old('is_active', $employee->is_active ?? true)" />
 
-    </x-form.select>
-
-    <x-form.select name="position_id" label="Cargo" required>
-
-        <option value="">
-            Seleccione...
-        </option>
-
-        @foreach ($positions as $position)
-            <option value="{{ $position->id }}" @selected(old('position_id', $employee->position_id ?? '') == $position->id)>
-
-                {{ $position->name }}
-
-            </option>
-        @endforeach
-
-    </x-form.select>
-
-    <x-form.select name="work_schedule_id" label="Horario laboral">
-
-        <option value="">
-            Sin horario asignado
-        </option>
-
-        @foreach ($workSchedules as $schedule)
-            <option value="{{ $schedule->id }}" @selected(old('work_schedule_id', $employee->work_schedule_id ?? '') == $schedule->id)>
-
-                {{ $schedule->name }}
-
-            </option>
-        @endforeach
-
-    </x-form.select>
-
-    <x-form.select name="is_active" label="Estado" required>
-
-        <option value="1" @selected(old('is_active', $employee->is_active ?? true))>
-
-            Activo
-
-        </option>
-
-        <option value="0" @selected(old('is_active', $employee->is_active ?? true) == false)>
-
-            Inactivo
-
-        </option>
-
-    </x-form.select>
 
 </div>
 

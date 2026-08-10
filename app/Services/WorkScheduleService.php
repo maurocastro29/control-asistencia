@@ -112,12 +112,30 @@ class WorkScheduleService
                 ? $day['lunch_minutes']
                 : 0,
 
-            'ordinary_minutes' => $day['is_working_day']
-                ? $day['ordinary_minutes']
-                : 0,
+            'ordinary_minutes' => $this->calculateOrdinaryMinutes($day),
 
             'is_working_day' => $day['is_working_day'],
 
         ];
+    }
+
+    private function calculateOrdinaryMinutes(array $day): int
+    {
+        if (!$day['is_working_day']) {
+            return 0;
+        }
+
+        if (empty($day['entry_time']) || empty($day['exit_time'])) {
+            return 0;
+        }
+
+        $entry = strtotime($day['entry_time']);
+        $exit = strtotime($day['exit_time']);
+
+        $minutes = intval(($exit - $entry) / 60);
+
+        $minutes -= intval($day['lunch_minutes'] ?? 0);
+
+        return max($minutes, 0);
     }
 }

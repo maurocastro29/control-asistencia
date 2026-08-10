@@ -28,14 +28,14 @@ class UpdateDocumentTypeRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('document_types', 'name')->ignore($this->documentType),
+                Rule::unique('document_types', 'name')->ignore($this->route('document_type')),
             ],
 
             'abbreviation' => [
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('document_types', 'abbreviation')->ignore($this->documentType),
+                Rule::unique('document_types', 'abbreviation')->ignore($this->route('document_type')),
             ],
 
             'description' => 'nullable|string|max:255',

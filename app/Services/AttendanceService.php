@@ -15,10 +15,8 @@ class AttendanceService
      */
     public function create(array $data): AttendanceRecord
     {
-        // Convertir horas a minutos
-        $data['lunch_minutes'] = (int) round($data['lunch_time'] * 60);
-
-        unset($data['lunch_time']);
+        // Convertir horas de almuerzo a minutos
+        $lunchMinutes = (int) round($data['lunch_time'] * 60);
 
         // Validar jornada duplicada
         $exists = AttendanceRecord::where('employee_id', $data['employee_id'])
@@ -31,19 +29,22 @@ class AttendanceService
             ]);
         }
 
-        // Calcular duración de la jornada
+        // Calcular duración total trabajada descontando almuerzo
         $workedMinutes = $this->calculateWorkedMinutes(
             $data['entry_time'],
             $data['exit_time'],
-            $data['lunch_minutes']
+            $lunchMinutes
         );
 
         // Validar tiempo de almuerzo
-        if ($data['lunch_minutes'] >= $workedMinutes) {
+        if ($lunchMinutes >= $workedMinutes) {
             throw ValidationException::withMessages([
                 'lunch_time' => 'El tiempo de almuerzo no puede ser mayor o igual al tiempo trabajado.',
             ]);
         }
+
+        // Guardar minutos en la columna lunch_time
+        $data['lunch_time'] = $lunchMinutes;
 
         return AttendanceRecord::create($data);
     }
@@ -69,7 +70,7 @@ class AttendanceService
     public function calculateWorkedMinutes(
         string $entryTime,
         string $exitTime,
-        int $lunchMinutes
+        int $lunchTime
     ): int {
 
         $entry = Carbon::parse($entryTime);
@@ -80,7 +81,7 @@ class AttendanceService
 
         return max(
             0,
-            $minutes - $lunchMinutes
+            $minutes - $lunchTime
         );
 
     }
@@ -131,7 +132,7 @@ class AttendanceService
                 'worked_minutes'   => 0,
                 'ordinary_minutes' => 0,
                 'overtime_minutes' => 0,
-                'lunch_minutes'    => 0,
+                'lunch_time'    => 0,
                 'scheduled_minutes'=> 0,
             ];
 
@@ -140,7 +141,7 @@ class AttendanceService
         $workedMinutes = $this->calculateWorkedMinutes(
             $attendance->entry_time,
             $attendance->exit_time,
-            $attendance->lunch_minutes
+            $attendance->lunch_time
         );
 
         $ordinaryMinutes = $this->calculateOrdinaryMinutes(
@@ -158,7 +159,7 @@ class AttendanceService
             'date' => $attendance->work_date,
             'entry_time' => $attendance->entry_time,
             'exit_time' => $attendance->exit_time,
-            'lunch_minutes' => $attendance->lunch_minutes,
+            'lunch_time' => $attendance->lunch_time,
             'worked_minutes' => $workedMinutes,
             'scheduled_minutes' => $scheduleDay->ordinary_minutes,
             'ordinary_minutes' => $ordinaryMinutes,
@@ -191,7 +192,7 @@ class AttendanceService
         $workedMinutes = $this->calculateWorkedMinutes(
             $data['entry_time'],
             $data['exit_time'],
-            $data['lunch_minutes']
+            $data['lunch_time']
         );
 
         // Validar tiempo de almuerzo

@@ -16,14 +16,14 @@ class WorkSchedule extends Model
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'is_working_day' => 'boolean',
         ];
     }
 
     public function days(): HasMany
     {
         return $this->hasMany(WorkScheduleDay::class)
-            ->orderBy('day_of_week');
+            ->orderBy('week_day_id');
     }
 
     public function employees(): HasMany

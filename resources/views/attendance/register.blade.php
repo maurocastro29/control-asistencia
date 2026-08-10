@@ -1,10 +1,6 @@
 <x-app-layout>
 
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">
-            Registro de Asistencia
-        </h2>
-    </x-slot>
+    <x-layout.page-header title="Registro de Asistencia" subtitle="Registrar una nueva asistencia" />
 
     {{-- Mensajes --}}
     @if (session('success'))
@@ -22,7 +18,7 @@
     {{-- ==========================
         BUSCAR EMPLEADO
     =========================== --}}
-    <x-card>
+    <x-layout.card>
 
         <form action="{{ route('attendance.search') }}" method="POST">
 
@@ -32,14 +28,14 @@
 
                 <div class="md:col-span-4">
 
-                    <x-form.input name="search" label="Buscar empleado" placeholder="Documento, nombre o apellido..."
-                        :value="old('search')" required />
+                    <x-form.input name="search" label="Buscar empleado"
+                        placeholder="Ingrese el documento, nombre o apellido..." :value="old('search')" required />
 
                 </div>
 
                 <div>
 
-                    <x-button.primary type="submit" class="w-full">
+                    <x-button.primary type="submit" class="">
 
                         Buscar
 
@@ -51,7 +47,7 @@
 
         </form>
 
-    </x-card>
+    </x-layout.card>
 
     {{-- ==========================
         RESULTADOS
@@ -60,48 +56,48 @@
 
         <div class="mt-6">
 
-            <x-card>
+            <x-layout.card>
 
                 <h3 class="text-lg font-semibold mb-4">
                     Resultados de la búsqueda
                 </h3>
 
-                <x-table>
+                <x-table.table>
 
-                    <x-slot name="head">
+                    <x-table.head>
 
-                        <tr>
-                            <th>Documento</th>
-                            <th>Empleado</th>
-                            <th>Departamento</th>
-                            <th>Cargo</th>
-                            <th class="text-center">Acción</th>
-                        </tr>
+                        <x-table.row>
+                            <x-table.th>Documento</x-table.th>
+                            <x-table.th>Empleado</x-table.th>
+                            <x-table.th>Departamento</x-table.th>
+                            <x-table.th>Cargo</x-table.th>
+                            <x-table.th class="text-center">Acción</x-table.th>
+                        </x-table.row>
 
-                    </x-slot>
+                    </x-table.head>
 
-                    <x-slot name="body">
+                    <x-table.body>
 
                         @foreach ($employees as $employee)
-                            <tr>
+                            <x-table.row>
 
-                                <td>
+                                <x-table.td>
                                     {{ $employee->document_number }}
-                                </td>
+                                </x-table.td>
 
-                                <td>
+                                <x-table.td>
                                     {{ $employee->full_name }}
-                                </td>
+                                </x-table.td>
 
-                                <td>
+                                <x-table.td>
                                     {{ $employee->department->name }}
-                                </td>
+                                </x-table.td>
 
-                                <td>
+                                <x-table.td>
                                     {{ $employee->position->name }}
-                                </td>
+                                </x-table.td>
 
-                                <td class="text-center">
+                                <x-table.td class="text-center">
 
                                     <x-button.primary href="{{ route('attendance.select', $employee) }}">
 
@@ -109,16 +105,16 @@
 
                                     </x-button.primary>
 
-                                </td>
+                                </x-table.td>
 
-                            </tr>
+                            </x-table.row>
                         @endforeach
 
-                    </x-slot>
+                    </x-table.body>
 
-                </x-table>
+                </x-table.table>
 
-            </x-card>
+            </x-layout.card>
 
         </div>
 
@@ -130,7 +126,7 @@
     @if (isset($selectedEmployee) && $selectedEmployee)
         <div class="mt-6">
 
-            <x-card>
+            <x-layout.card>
 
                 <h3 class="text-lg font-semibold mb-6">
                     Registrar Jornada
@@ -144,13 +140,13 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                        <x-form.input label="Empleado" :value="$selectedEmployee->full_name" disabled />
+                        <x-form.input name="employee_display" label="Empleado" :value="$selectedEmployee->full_name" disabled />
 
-                        <x-form.input label="Documento" :value="$selectedEmployee->document_number" disabled />
+                        <x-form.input name="document_display" label="Documento" :value="$selectedEmployee->document_number" disabled />
 
-                        <x-form.input label="Departamento" :value="$selectedEmployee->department->name" disabled />
+                        <x-form.input name="department_display" label="Departamento" :value="$selectedEmployee->department->name" disabled />
 
-                        <x-form.input label="Cargo" :value="$selectedEmployee->position->name" disabled />
+                        <x-form.input name="position_display" label="Cargo" :value="$selectedEmployee->position->name" disabled />
 
                         <x-form.input type="date" name="work_date" label="Fecha" :value="old('work_date', now()->format('Y-m-d'))" required />
 
@@ -193,7 +189,7 @@
 
                 </form>
 
-            </x-card>
+            </x-layout.card>
 
         </div>
     @endif

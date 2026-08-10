@@ -1,17 +1,17 @@
 <x-app-layout>
 
-    <x-slot name="header">
-        Registrar Jornada
-    </x-slot>
+    <x-layout.page-header title="Nueva Jornada" subtitle="Registrar una nueva jornada" />
 
-    <x-card>
+    <x-layout.card>
 
         <form action="{{ route('attendance-records.store') }}" method="POST">
+
+            @csrf
 
             @include('attendance-records._form')
 
         </form>
 
-    </x-card>
+    </x-layout.card>
 
 </x-app-layout>

@@ -9,74 +9,96 @@
     </div>
 
     <nav class="mt-4">
-
-        <a href="{{ route('dashboard') }}" class="block px-6 py-3 hover:bg-slate-700">
-            Dashboard
-        </a>
+        @can('dashboard.view')
+            <a href="{{ route('dashboard') }}" class="block px-6 py-3 hover:bg-slate-700">
+                Dashboard
+            </a>
+        @endcan
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Administración
         </div>
 
-        <a href="{{ route('users.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Usuarios
-        </a>
+        @can('users.view')
+            <a href="{{ route('users.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Usuarios
+            </a>
+        @endcan
+
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Catálogos
         </div>
 
-        <a href="{{ route('document-types.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Tipos de documento
-        </a>
+        @can('document-types.view')
+            <a href="{{ route('document-types.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Tipos de documento
+            </a>
+        @endcan
 
-        <a href="{{ route('departments.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Departamentos
-        </a>
+        @can('departments.view')
+            <a href="{{ route('departments.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Departamentos
+            </a>
+        @endcan
 
-        <a href="{{ route('positions.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Cargos
-        </a>
+        @can('positions.view')
+            <a href="{{ route('positions.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Cargos
+            </a>
+        @endcan
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Personal
         </div>
 
-        <a href="{{ route('employees.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Empleados
-        </a>
+        @can('employees.view')
+            <a href="{{ route('employees.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Empleados
+            </a>
+        @endcan
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Asistencia
         </div>
 
-        <a href="{{ route('attendance.register') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Registrar asistencia
-        </a>
+        @can('attendance.view')
+            <a href="{{ route('attendance.register') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Registrar asistencia
+            </a>
+        @endcan
 
-        <a href="{{ route('attendance-records.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Historial
-        </a>
+        @can('attendance-records.view')
+            <a href="{{ route('attendance-records.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Historial
+            </a>
+        @endcan
 
-        <a href="{{ route('work-schedules.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Horarios
-        </a>
+        @can('work-schedules.view')
+            <a href="{{ route('work-schedules.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Horarios
+            </a>
+        @endcan
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Reportes
         </div>
 
-        <a href="#" class="block px-6 py-2 hover:bg-slate-700">
-            Reportes
-        </a>
+        @can('reports.view')
+            <a href="{{ route('reports') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Reportes
+            </a>
+        @endcan
 
         <div class="mt-6 px-6 text-xs uppercase text-slate-400">
             Configuración
         </div>
 
-        <a href="{{ route('settings.index') }}" class="block px-6 py-2 hover:bg-slate-700">
-            Configuración
-        </a>
+        @can('settings.view')
+            <a href="{{ route('settings.index') }}" class="block px-6 py-2 hover:bg-slate-700">
+                Configuración
+            </a>
+        @endcan
 
     </nav>
 

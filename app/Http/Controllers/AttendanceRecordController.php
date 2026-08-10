@@ -8,32 +8,50 @@ use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Services\AttendanceService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Routing\Controller;
 
 class AttendanceRecordController extends Controller
 {
 
     public function __construct(private readonly AttendanceService $attendanceService)
     {
-        $this->attendanceService = $attendanceService;
+
+        $this->middleware('permission:attendance-records.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:attendance-records.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:attendance-records.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:attendance-records.delete')
+            ->only('destroy');
     }
 
     /**
      * Display a listing of the resource.
      */
     public function index(): View
-    {
-        $attendanceRecords = AttendanceRecord::with([
-                'employee',
-                'createdBy',
-            ])
-            ->orderByDesc('attendance_datetime')
-            ->paginate(15);
+{
+    $lastWorkDate = AttendanceRecord::query()
+        ->orderByDesc('work_date')
+        ->value('work_date');
 
-        return view('attendance-records.index', compact('attendanceRecords'));
-    }
+    $attendanceRecords = AttendanceRecord::with('employee')
+        ->when($lastWorkDate, function ($query) use ($lastWorkDate) {
+            $query->whereDate('work_date', $lastWorkDate);
+        })
+        ->orderBy('entry_time')
+        ->paginate(15);
+
+    return view('attendance-records.index', compact(
+        'attendanceRecords',
+        'lastWorkDate'
+    ));
+}
 
     /**
      * Show the form for creating a new resource.
@@ -44,8 +62,8 @@ class AttendanceRecordController extends Controller
             'attendance-records.create',
             [
                 'employees' => Employee::where('is_active', true)
-                    ->orderBy('first_last_name')
                     ->orderBy('first_name')
+                    ->orderBy('first_last_name')
                     ->get(),
             ]
         );
@@ -57,6 +75,8 @@ class AttendanceRecordController extends Controller
     public function store(StoreAttendanceRecordRequest $request): RedirectResponse
     {
         $data = $request->validated();
+
+       // dd($data);
 
         $data['created_by'] = Auth::id();
 

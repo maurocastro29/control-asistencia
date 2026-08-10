@@ -2,12 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDocumentTypeRequest;
 use App\Http\Requests\UpdateDocumentTypeRequest;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class DocumentTypeController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:document-types.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:document-types.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:document-types.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:document-types.delete')
+            ->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -28,7 +45,7 @@ class DocumentTypeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreDocumentTypeRequest $request)
     {
         DocumentType::create($request->validated());
         return redirect()

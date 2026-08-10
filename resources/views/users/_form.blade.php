@@ -12,6 +12,9 @@
 
     <x-form.input name="second_last_name" label="Segundo apellido" :value="old('second_last_name', $user->second_last_name ?? '')" />
 
+    <x-form.select name="role" label="Rol del sistema" :options="$roles" optionValue="name" optionLabel="name"
+        :selected="old('role', isset($user) ? $user->getRoleNames()->first() : '')" required />
+
     <x-form.input type="password" name="password" label="Contraseña" />
 
     <x-form.input type="password" name="password_confirmation" label="Confirmar contraseña" />

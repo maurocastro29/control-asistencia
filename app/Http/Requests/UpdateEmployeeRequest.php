@@ -43,6 +43,10 @@ class UpdateEmployeeRequest extends FormRequest
             'address' => 'nullable|string|max:255',
             'hire_date' => 'required|date',
             'termination_date' => 'nullable|date|after_or_equal:hire_date',
+            'work_schedule_id' => [
+                'nullable',
+                'exists:work_schedules,id',
+            ],
             'is_active' => 'required|boolean',
         ];
     }

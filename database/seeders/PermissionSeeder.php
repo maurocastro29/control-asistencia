@@ -109,10 +109,22 @@ class PermissionSeeder extends Seeder
             | Attendance
             |--------------------------------------------------------------------------
             */
+
             'attendance.view',
             'attendance.register',
             'attendance.edit',
             'attendance.delete',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Attendance Records
+            |--------------------------------------------------------------------------
+            */
+
+            'attendance-records.view',
+            'attendance-records.create',
+            'attendance-records.edit',
+            'attendance-records.delete',
 
             /*
             |--------------------------------------------------------------------------

@@ -1,10 +1,26 @@
 <x-app-layout>
 
-    <x-slot name="header">
-        Detalle de la Jornada
-    </x-slot>
+    <x-layout.page-header title="Detalle de la Jornada" subtitle="Información de la jornada">
 
-    <x-card>
+        <x-slot:actions>
+
+            <x-button.secondary :href="route('attendance-records.edit', $attendanceRecord)">
+
+                Editar
+
+            </x-button.secondary>
+
+            <x-button.secondary :href="route('attendance-records.index')">
+
+                Volver
+
+            </x-button.secondary>
+
+        </x-slot:actions>
+
+    </x-layout.page-header>
+
+    <x-layout.card>
 
         <dl class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -20,12 +36,12 @@
 
             <div>
                 <dt class="font-semibold">Hora de entrada</dt>
-                <dd>{{ $attendanceRecord->entry_time }}</dd>
+                <dd>{{ $attendanceRecord->entry_time?->format('H:i') }}</dd>
             </div>
 
             <div>
                 <dt class="font-semibold">Hora de salida</dt>
-                <dd>{{ $attendanceRecord->exit_time }}</dd>
+                <dd>{{ $attendanceRecord->exit_time?->format('H:i') }}</dd>
             </div>
 
             <div>
@@ -38,21 +54,23 @@
                 <dd>{{ $attendanceRecord->createdBy->full_name }}</dd>
             </div>
 
-            <div class="md:col-span-2">
+            <div>
+                <dt class="font-semibold">Fecha de registro</dt>
+                <dd>{{ $attendanceRecord->created_at->format('d/m/Y H:i') }}</dd>
+            </div>
+
+            <div>
+                <dt class="font-semibold">Última actualización</dt>
+                <dd>{{ $attendanceRecord->updated_at->format('d/m/Y H:i') }}</dd>
+            </div>
+
+            <div>
                 <dt class="font-semibold">Observaciones</dt>
                 <dd>{{ $attendanceRecord->observations ?: 'Sin observaciones' }}</dd>
             </div>
 
         </dl>
 
-        <div class="mt-6 flex justify-end">
-
-            <x-button.secondary href="{{ route('attendance-records.index') }}">
-                Volver
-            </x-button.secondary>
-
-        </div>
-
-    </x-card>
+    </x-layout.card>
 
 </x-app-layout>

@@ -34,7 +34,11 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware([
+    'auth',
+    'verified',
+    'permission:dashboard.view'
+])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -142,7 +146,8 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)
+            ->middleware('permission:users.view');
     Route::resource('settings', SettingController::class);
 });
 

@@ -3,9 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class SettingController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:settings.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:settings.edit')
+            ->only(['edit', 'update']);
+    }
     /**
      * Display a listing of the resource.
      */

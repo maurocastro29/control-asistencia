@@ -70,6 +70,11 @@ class UpdateUserRequest extends FormRequest
                 'boolean',
             ],
 
+            'role' => [
+                'required', 
+                'exists:roles,name'
+            ],
+
         ];
     }
 

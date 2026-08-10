@@ -22,6 +22,11 @@
             </div>
 
             <div>
+                <strong>Rol</strong>
+                <p>{{ $user->getRoleNames()->first() }}</p>
+            </div>
+
+            <div>
                 <strong>Estado</strong>
 
                 <div class="mt-2">

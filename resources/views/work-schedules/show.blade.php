@@ -13,45 +13,67 @@
             <div class="bg-white rounded-lg shadow">
 
                 <div class="p-6">
+                    <div class="flex justify-between gap-3">
+                        <div>
+                            <h3 class="text-xl font-bold">
 
-                    <h3 class="text-xl font-bold">
+                                {{ $workSchedule->name }}
 
-                        {{ $workSchedule->name }}
+                            </h3>
 
-                    </h3>
+                            <p class="text-gray-600 mt-2">
 
-                    <p class="text-gray-600 mt-2">
+                                {{ $workSchedule->description }}
 
-                        {{ $workSchedule->description }}
+                            </p>
+                        </div>
+                        <div>
+                            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                                onclick="window.history.back()">
+                                Volver
+                            </button>
+                        </div>
+                    </div>
 
-                    </p>
+
+
 
                 </div>
 
-                <x-table>
+                <x-table.table>
 
-                    <x-slot name="head">
+                    <x-table.head>
 
-                        <tr>
+                        <x-table.row>
 
-                            <x-table.th>Día</x-table.th>
+                            <x-table.th>
+                                Día
+                            </x-table.th>
 
-                            <x-table.th>Entrada</x-table.th>
+                            <x-table.th>
+                                Entrada
+                            </x-table.th>
 
-                            <x-table.th>Salida</x-table.th>
+                            <x-table.th>
+                                Salida
+                            </x-table.th>
 
-                            <x-table.th>Almuerzo</x-table.th>
+                            <x-table.th>
+                                Almuerzo
+                            </x-table.th>
 
-                            <x-table.th>Ordinarias</x-table.th>
+                            <x-table.th>
+                                Ordinaria
+                            </x-table.th>
 
-                        </tr>
+                        </x-table.row>
 
-                    </x-slot>
+                    </x-table.head>
 
-                    <x-slot name="body">
+                    <x-table.body>
 
                         @foreach ($workSchedule->days as $day)
-                            <tr>
+                            <x-table.row>
 
                                 <x-table.td>
 
@@ -61,34 +83,34 @@
 
                                 <x-table.td>
 
-                                    {{ $day->entry_time }}
+                                    {{ $day->entry_time?->format('H:i') ?? '-' }}
 
                                 </x-table.td>
 
                                 <x-table.td>
 
-                                    {{ $day->exit_time }}
+                                    {{ $day->exit_time?->format('H:i') ?? '-' }}
 
                                 </x-table.td>
 
                                 <x-table.td>
 
-                                    {{ $day->lunch_minutes }} min
+                                    {{ number_format($day->lunch_minutes / 60, 1) }} h
 
                                 </x-table.td>
 
                                 <x-table.td>
 
-                                    {{ $day->ordinary_minutes }} min
+                                    {{ number_format($day->ordinary_minutes / 60, 1) }} h
 
                                 </x-table.td>
 
-                            </tr>
+                            </x-table.row>
                         @endforeach
 
-                    </x-slot>
+                    </x-table.body>
 
-                </x-table>
+                </x-table.table>
 
             </div>
 

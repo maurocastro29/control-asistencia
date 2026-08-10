@@ -4,12 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:users.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:users.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:users.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:users.delete')
+            ->only('destroy');
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -27,7 +45,8 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        return view('users.create');
+        $roles = Role::orderBy('name')->get();
+        return view('users.create', compact('roles'));
     }
 
     /**
@@ -35,7 +54,8 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        User::create($request->validated());
+        $user = User::create($request->validated());
+        $user->assignRole($request->role);
 
         return redirect()
             ->route('users.index')
@@ -48,8 +68,9 @@ class UserController extends Controller
     public function show(User $user): View
     {
         $user->load('positions');
+        $roles = Role::orderBy('name')->get();
 
-        return view('users.show', compact('user'));
+        return view('users.show', compact('user', 'roles'));
     }
 
     /**
@@ -57,7 +78,8 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
-        return view('users.edit', compact('user'));
+        $roles = Role::orderBy('name')->get();
+        return view('users.edit', compact('user', 'roles'));
     }
 
     /**
@@ -72,6 +94,7 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        $user->syncRoles($request->role);
 
         return redirect()
             ->route('users.index')

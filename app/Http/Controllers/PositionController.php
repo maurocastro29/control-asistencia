@@ -2,12 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateDocumentTypeRequest;
 use App\Models\Position;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use App\Http\Requests\StorePositionRequest;
+use App\Http\Requests\UpdatePositionRequest;
 
 class PositionController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:positions.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:positions.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:positions.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:positions.delete')
+            ->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */
@@ -28,9 +44,10 @@ class PositionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StorePositionRequest $request)
     {
         Position::create($request->validated());
+
         return redirect()
             ->route('positions.index')
             ->with('success', 'Cargo creado correctamente.');
@@ -55,7 +72,7 @@ class PositionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateDocumentTypeRequest $request, Position $position)
+    public function update(UpdatePositionRequest $request, Position $position)
     {
         $position->update($request->validated());
 

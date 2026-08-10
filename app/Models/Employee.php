@@ -27,6 +27,7 @@ class Employee extends Model
         'address',
         'hire_date',
         'termination_date',
+        'work_schedule_id',
         'is_active',
     ];
 

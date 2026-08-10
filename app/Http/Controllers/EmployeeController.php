@@ -12,9 +12,25 @@ use App\Models\WorkSchedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Routing\Controller;
 
 class EmployeeController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:employees.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:employees.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:employees.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:employees.delete')
+            ->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */

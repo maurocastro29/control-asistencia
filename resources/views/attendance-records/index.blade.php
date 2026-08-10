@@ -1,24 +1,79 @@
-<x-app-layout> <x-slot name="header"> Jornadas Registradas </x-slot>
-    <div class="mb-4 flex justify-end"> <x-button.primary href="{{ route('attendance-records.create') }}"> Nueva Jornada
-        </x-button.primary> </div> <x-table> <x-slot name="head">
-            <th>Empleado</th>
-            <th>Fecha</th>
-            <th>Entrada</th>
-            <th>Salida</th>
-            <th>Almuerzo</th>
-            <th class="text-center">Acciones</th>
-        </x-slot> <x-slot name="body">
+<x-app-layout>
+    <x-layout.page-header title="Jornadas" subtitle="Jornadas Registradas">
+
+        <x-slot:actions>
+
+            <x-button.primary :href="route('attendance.register')">
+                Registrar nueva asistencia
+            </x-button.primary>
+
+        </x-slot:actions>
+
+    </x-layout.page-header>
+    @if ($lastWorkDate)
+        <div class="py-2">
+
+            <p class="text-sm text-slate-700 mt-1">
+                Mostrando jornadas del {{ \Carbon\Carbon::parse($lastWorkDate)->format('d/m/Y') }} <span
+                    class="text-slate-500"> (Última fecha que
+                    registra asistencia)</span>
+            </p>
+
+        </div>
+    @endif
+    <x-table.table>
+        <x-table.head>
+
+            <x-table.row>
+
+                <x-table.th>
+                    Empleado
+                </x-table.th>
+
+                <x-table.th>
+                    Fecha
+                </x-table.th>
+
+                <x-table.th>
+                    Entrada
+                </x-table.th>
+
+                <x-table.th>
+                    Salida
+                </x-table.th>
+
+                <x-table.th>
+                    Almuerzo
+                </x-table.th>
+
+                <x-table.th class="w-40">
+                    Acciones
+                </x-table.th>
+
+            </x-table.row>
+
+        </x-table.head>
+
+        <x-table.body>
             @foreach ($attendanceRecords as $attendanceRecord)
-                <tr>
-                    <td>{{ $attendanceRecord->employee->full_name }}</td>
-                    <td>{{ $attendanceRecord->work_date->format('d/m/Y') }}</td>
-                    <td>{{ $attendanceRecord->entry_time }}</td>
-                    <td>{{ $attendanceRecord->exit_time }}</td>
-                    <td>{{ $attendanceRecord->lunch_time / 60 }} h</td>
-                    <td class="text-center"> <x-button.show :href="route('attendance-records.show', $attendanceRecord)" /> <x-button.edit :href="route('attendance-records.edit', $attendanceRecord)" />
-                    </td>
-                </tr>
+                <x-table.row>
+                    <x-table.td>{{ $attendanceRecord->employee->full_name }}</x-table.td>
+                    <x-table.td>{{ $attendanceRecord->work_date->format('d/m/Y') }}</x-table.td>
+                    <x-table.td>{{ $attendanceRecord->entry_time?->format('H:i') }}</x-table.td>
+                    <x-table.td>{{ $attendanceRecord->exit_time?->format('H:i') }}</x-table.td>
+                    <x-table.td>{{ $attendanceRecord->lunch_time / 60 }} h</x-table.td>
+                    <x-table.td class="flex gap-2 justify-start">
+                        <x-button.secondary class="bg-indigo-700 hover:bg-indigo-600 text-white" :href="route('attendance-records.show', $attendanceRecord)">
+                            Ver
+                        </x-button.secondary>
+
+                        <x-button.secondary class="bg-green-700 hover:bg-green-600 text-white" :href="route('attendance-records.edit', $attendanceRecord)">
+                            Editar
+                        </x-button.secondary>
+                    </x-table.td>
+                </x-table.row>
             @endforeach
-        </x-slot> </x-table>
+        </x-table.body>
+    </x-table.table>
     <div class="mt-4"> {{ $attendanceRecords->links() }} </div>
 </x-app-layout>

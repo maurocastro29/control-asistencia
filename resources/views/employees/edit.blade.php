@@ -1,16 +1,18 @@
-<x-layout.page-header title="Editar Empleado" subtitle="Actualizar la información del empleado">
+<x-app-layout>
+    <x-layout.page-header title="Editar Empleado" subtitle="Actualizar la información del empleado">
 
-</x-layout.page-header>
+    </x-layout.page-header>
 
-<x-layout.card>
+    <x-layout.card>
 
-    <form action="{{ route('employees.update', $employee) }}" method="POST">
+        <form action="{{ route('employees.update', $employee) }}" method="POST">
 
-        @csrf
-        @method('PUT')
+            @csrf
+            @method('PUT')
 
-        @include('employees.partials.form')
+            @include('employees.partials.form')
 
-    </form>
+        </form>
 
-</x-layout.card>
+    </x-layout.card>
+</x-app-layout>

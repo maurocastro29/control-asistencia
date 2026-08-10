@@ -49,7 +49,6 @@ class StoreAttendanceRecordRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:0',
-                'max:4',
             ],
 
             'observations' => [

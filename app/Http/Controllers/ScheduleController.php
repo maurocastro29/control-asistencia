@@ -3,9 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class ScheduleController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:schedules.view')
+            ->only(['index', 'show']);
+
+        $this->middleware('permission:schedules.create')
+            ->only(['create', 'store']);
+
+        $this->middleware('permission:schedules.edit')
+            ->only(['edit', 'update']);
+
+        $this->middleware('permission:schedules.delete')
+            ->only('destroy');
+    }
+
     /**
      * Display a listing of the resource.
      */

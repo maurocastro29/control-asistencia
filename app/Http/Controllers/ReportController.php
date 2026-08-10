@@ -3,9 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class ReportController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:reports.view')
+            ->only(['attendance']);
+
+        $this->middleware('permission:reports.export')
+            ->only(['exportPdf', 'exportExcel']);
+    }
     /**
      * Display a listing of the resource.
      */

@@ -1,15 +1,17 @@
-<x-layout.page-header title="Nuevo Empleado" subtitle="Registrar un nuevo empleado">
+<x-app-layout>
+    <x-layout.page-header title="Nuevo Empleado" subtitle="Registrar un nuevo empleado">
 
-</x-layout.page-header>
+    </x-layout.page-header>
 
-<x-layout.card>
+    <x-layout.card>
 
-    <form action="{{ route('employees.store') }}" method="POST">
+        <form action="{{ route('employees.store') }}" method="POST">
 
-        @csrf
+            @csrf
 
-        @include('employees.partials.form')
+            @include('employees.partials.form')
 
-    </form>
+        </form>
 
-</x-layout.card>
+    </x-layout.card>
+</x-app-layout>

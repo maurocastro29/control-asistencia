@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Permission;
-use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -31,6 +30,7 @@ class RoleSeeder extends Seeder
                 'attendance.view',
                 'attendance.register',
                 'attendance.edit',
+                'attendance-records.view',
 
                 'reports.view',
                 'reports.export',
