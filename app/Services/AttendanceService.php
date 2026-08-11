@@ -15,143 +15,160 @@ class AttendanceService
      */
     public function create(array $data): AttendanceRecord
     {
-        // Convertir horas de almuerzo a minutos
-        $lunchMinutes = (int) round($data['lunch_time'] * 60);
+        $lunchMinutes = $this->hoursToMinutes((float) $data['lunch_time']);
 
-        // Validar jornada duplicada
-        $exists = AttendanceRecord::where('employee_id', $data['employee_id'])
-            ->whereDate('work_date', $data['work_date'])
-            ->exists();
+        $this->validateDuplicateAttendance(
+            $data['employee_id'],
+            $data['work_date']
+        );
 
-        if ($exists) {
-            throw ValidationException::withMessages([
-                'work_date' => 'Ya existe una jornada registrada para este empleado en esa fecha.',
-            ]);
-        }
-
-        // Calcular duración total trabajada descontando almuerzo
-        $workedMinutes = $this->calculateWorkedMinutes(
+        $this->validateLunchTime(
             $data['entry_time'],
             $data['exit_time'],
             $lunchMinutes
         );
 
-        // Validar tiempo de almuerzo
-        if ($lunchMinutes >= $workedMinutes) {
-            throw ValidationException::withMessages([
-                'lunch_time' => 'El tiempo de almuerzo no puede ser mayor o igual al tiempo trabajado.',
-            ]);
-        }
-
-        // Guardar minutos en la columna lunch_time
         $data['lunch_time'] = $lunchMinutes;
 
         return AttendanceRecord::create($data);
     }
 
     /**
-     * Obtiene el horario del empleado para una fecha determinada.
+     * Actualiza una jornada.
      */
-    public function getEmployeeScheduleForDate( Employee $employee, Carbon $date): ?WorkScheduleDay
-    {
+    public function update(
+        AttendanceRecord $attendanceRecord,
+        array $data
+    ): AttendanceRecord {
+        $lunchMinutes = $this->hoursToMinutes((float) $data['lunch_time']);
+
+        $this->validateDuplicateAttendance(
+            $data['employee_id'],
+            $data['work_date'],
+            $attendanceRecord->id
+        );
+
+        $this->validateLunchTime(
+            $data['entry_time'],
+            $data['exit_time'],
+            $lunchMinutes
+        );
+
+        $data['lunch_time'] = $lunchMinutes;
+
+        $attendanceRecord->update($data);
+
+        return $attendanceRecord->fresh();
+    }
+
+    /**
+     * Obtiene el horario correspondiente a una fecha.
+     */
+    public function getEmployeeScheduleForDate(
+        Employee $employee,
+        Carbon $date
+    ): ?WorkScheduleDay {
         if (!$employee->workSchedule) {
             return null;
         }
 
         return $employee->workSchedule
             ->days()
-            ->where('week_day_id', $date->dayOfWeekIso)
+            ->whereHas('weekDay', function ($query) use ($date) {
+                $query->where('order', $date->dayOfWeekIso);
+            })
             ->first();
     }
 
     /**
-     * Calcula los minutos trabajados.
+     * Calcula los minutos brutos entre entrada y salida.
+     */
+    public function calculateGrossMinutes(
+        string $entryTime,
+        string $exitTime
+    ): int {
+        $entry = Carbon::parse($entryTime);
+        $exit = Carbon::parse($exitTime);
+
+        return $entry->diffInMinutes($exit);
+    }
+
+    /**
+     * Calcula minutos realmente trabajados.
      */
     public function calculateWorkedMinutes(
         string $entryTime,
         string $exitTime,
-        int $lunchTime
+        int $lunchMinutes
     ): int {
-
-        $entry = Carbon::parse($entryTime);
-
-        $exit = Carbon::parse($exitTime);
-
-        $minutes = $entry->diffInMinutes($exit);
-
         return max(
             0,
-            $minutes - $lunchTime
+            $this->calculateGrossMinutes($entryTime, $exitTime)
+                - $lunchMinutes
         );
-
     }
 
     /**
-     * Calcula los minutos ordinarios.
+     * Calcula minutos ordinarios.
      */
     public function calculateOrdinaryMinutes(
         int $workedMinutes,
-        int $ordinaryMinutes
+        int $scheduledMinutes
     ): int {
-
-        return min(
-            $workedMinutes,
-            $ordinaryMinutes
-        );
+        return min($workedMinutes, $scheduledMinutes);
     }
 
     /**
-     * Calcula minutos extras.
+     * Calcula minutos extras diarios.
      */
     public function calculateOvertimeMinutes(
         int $workedMinutes,
-        int $ordinaryMinutes
+        int $scheduledMinutes
     ): int {
-
-        return max(
-            0,
-            $workedMinutes - $ordinaryMinutes
-        );
+        return max(0, $workedMinutes - $scheduledMinutes);
     }
 
     /**
-     * Calcula la jornada completa de una marcación.
+     * Calcula toda la jornada.
      */
     public function calculateAttendance(
         AttendanceRecord $attendance
     ): array {
-
         $scheduleDay = $this->getEmployeeScheduleForDate(
             $attendance->employee,
             Carbon::parse($attendance->work_date)
         );
 
-        if (!$scheduleDay) {
-
-            return [
-                'worked_minutes'   => 0,
-                'ordinary_minutes' => 0,
-                'overtime_minutes' => 0,
-                'lunch_time'    => 0,
-                'scheduled_minutes'=> 0,
-            ];
-
-        }
-
         $workedMinutes = $this->calculateWorkedMinutes(
-            $attendance->entry_time,
-            $attendance->exit_time,
+            $attendance->entry_time->format('H:i'),
+            $attendance->exit_time->format('H:i'),
             $attendance->lunch_time
         );
 
+        if (!$scheduleDay || !$scheduleDay->is_working_day) {
+            return [
+                'employee_id' => $attendance->employee_id,
+                'date' => $attendance->work_date,
+                'entry_time' => $attendance->entry_time,
+                'exit_time' => $attendance->exit_time,
+                'lunch_time' => $attendance->lunch_time,
+                'worked_minutes' => $workedMinutes,
+                'scheduled_minutes' => 0,
+                'ordinary_minutes' => 0,
+                'overtime_minutes' => 0,
+            ];
+        }
+
+        $scheduledMinutes = $scheduleDay->ordinary_minutes;
+
         $ordinaryMinutes = $this->calculateOrdinaryMinutes(
             $workedMinutes,
-            $scheduleDay->ordinary_minutes
+            $scheduledMinutes
         );
 
         $overtimeMinutes = $this->calculateOvertimeMinutes(
             $workedMinutes,
-            $scheduleDay->ordinary_minutes
+            $scheduledMinutes
         );
 
         return [
@@ -161,72 +178,52 @@ class AttendanceService
             'exit_time' => $attendance->exit_time,
             'lunch_time' => $attendance->lunch_time,
             'worked_minutes' => $workedMinutes,
-            'scheduled_minutes' => $scheduleDay->ordinary_minutes,
+            'scheduled_minutes' => $scheduledMinutes,
             'ordinary_minutes' => $ordinaryMinutes,
             'overtime_minutes' => $overtimeMinutes,
         ];
-
     }
 
     /**
-     * Actualiza una jornada de trabajo.
+     * Valida duplicidad.
      */
-    public function update(AttendanceRecord $attendanceRecord, array $data): AttendanceRecord
-    {
-        // Convertir horas de almuerzo a minutos
-        $data['lunch_time'] = (int) round($data['lunch_time'] * 60);
+    private function validateDuplicateAttendance(
+        int $employeeId,
+        string $workDate,
+        ?int $ignoreId = null
+    ): void {
+        $query = AttendanceRecord::where('employee_id', $employeeId)
+            ->whereDate('work_date', $workDate);
 
-        // Validar jornada duplicada
-        $exists = AttendanceRecord::where('employee_id', $data['employee_id'])
-            ->whereDate('work_date', $data['work_date'])
-            ->where('id', '!=', $attendanceRecord->id)
-            ->exists();
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
 
-        if ($exists) {
+        if ($query->exists()) {
             throw ValidationException::withMessages([
                 'work_date' => 'Ya existe una jornada registrada para este empleado en esa fecha.',
             ]);
         }
+    }
 
-        // Calcular duración de la jornada
-        $workedMinutes = $this->calculateWorkedMinutes(
-            $data['entry_time'],
-            $data['exit_time'],
-            $data['lunch_time']
+    /**
+     * Valida el tiempo de almuerzo.
+     */
+    private function validateLunchTime(
+        string $entryTime,
+        string $exitTime,
+        int $lunchMinutes
+    ): void {
+        $grossMinutes = $this->calculateGrossMinutes(
+            $entryTime,
+            $exitTime
         );
 
-        // Validar tiempo de almuerzo
-        if ($data['lunch_time'] >= $workedMinutes) {
+        if ($lunchMinutes >= $grossMinutes) {
             throw ValidationException::withMessages([
-                'lunch_time' => 'El tiempo de almuerzo no puede ser mayor o igual al tiempo trabajado.',
+                'lunch_time' => 'El tiempo de almuerzo no puede ser mayor o igual a la duración de la jornada.',
             ]);
         }
-
-        $attendanceRecord->update($data);
-
-        return $attendanceRecord->fresh();
-    }
-
-    /**
-     * Calcula las horas extras.
-     *
-     * Inicialmente siempre será 0.
-     * Cuando implementemos el cálculo semanal se modificará este método.
-     */
-    public function calculateExtraMinutes(int $workedMinutes): int
-    {
-        return 0;
-    }
-
-    /**
-     * Convierte minutos a formato HH:MM.
-     */
-    public function formatMinutes(int $minutes): string
-    {
-        $hours = intdiv($minutes, 60);
-        $minutes = $minutes % 60;
-
-        return sprintf('%02d:%02d', $hours, $minutes);
     }
 
     /**
@@ -243,5 +240,17 @@ class AttendanceService
     public function minutesToHours(int $minutes): float
     {
         return round($minutes / 60, 2);
+    }
+
+    /**
+     * Formatea minutos como HH:MM.
+     */
+    public function formatMinutes(int $minutes): string
+    {
+        return sprintf(
+            '%02d:%02d',
+            intdiv($minutes, 60),
+            $minutes % 60
+        );
     }
 }

@@ -16,7 +16,7 @@ class WorkSchedule extends Model
     protected function casts(): array
     {
         return [
-            'is_working_day' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

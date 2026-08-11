@@ -85,7 +85,7 @@
         </div>
 
         @can('reports.view')
-            <a href="{{ route('reports') }}" class="block px-6 py-2 hover:bg-slate-700">
+            <a href="{{ route('reports.attendance') }}" class="block px-6 py-2 hover:bg-slate-700">
                 Reportes
             </a>
         @endcan
