@@ -76,8 +76,6 @@ class AttendanceRecordController extends Controller
     {
         $data = $request->validated();
 
-       // dd($data);
-
         $data['created_by'] = Auth::id();
 
         $this->attendanceService->create($data);

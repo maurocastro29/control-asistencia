@@ -11,11 +11,13 @@ use Illuminate\Validation\ValidationException;
 class AttendanceService
 {
     /**
-     * Crea una nueva jornada de trabajo.
+     * Crea una nueva jornada.
      */
     public function create(array $data): AttendanceRecord
     {
-        $lunchMinutes = $this->hoursToMinutes((float) $data['lunch_time']);
+        $lunchMinutes = $this->hoursToMinutes(
+            (float) $data['lunch_time']
+        );
 
         $this->validateDuplicateAttendance(
             $data['employee_id'],
@@ -40,7 +42,9 @@ class AttendanceService
         AttendanceRecord $attendanceRecord,
         array $data
     ): AttendanceRecord {
-        $lunchMinutes = $this->hoursToMinutes((float) $data['lunch_time']);
+        $lunchMinutes = $this->hoursToMinutes(
+            (float) $data['lunch_time']
+        );
 
         $this->validateDuplicateAttendance(
             $data['employee_id'],
@@ -81,7 +85,7 @@ class AttendanceService
     }
 
     /**
-     * Calcula los minutos brutos entre entrada y salida.
+     * Calcula minutos brutos entre entrada y salida.
      */
     public function calculateGrossMinutes(
         string $entryTime,
@@ -115,7 +119,10 @@ class AttendanceService
         int $workedMinutes,
         int $scheduledMinutes
     ): int {
-        return min($workedMinutes, $scheduledMinutes);
+        return min(
+            $workedMinutes,
+            $scheduledMinutes
+        );
     }
 
     /**
@@ -125,7 +132,10 @@ class AttendanceService
         int $workedMinutes,
         int $scheduledMinutes
     ): int {
-        return max(0, $workedMinutes - $scheduledMinutes);
+        return max(
+            0,
+            $workedMinutes - $scheduledMinutes
+        );
     }
 
     /**
@@ -134,29 +144,46 @@ class AttendanceService
     public function calculateAttendance(
         AttendanceRecord $attendance
     ): array {
+        $workDate = Carbon::parse($attendance->work_date);
+
         $scheduleDay = $this->getEmployeeScheduleForDate(
             $attendance->employee,
-            Carbon::parse($attendance->work_date)
+            $workDate
         );
 
+        $entryTime = $attendance->entry_time->format('H:i');
+        $exitTime = $attendance->exit_time->format('H:i');
+
         $workedMinutes = $this->calculateWorkedMinutes(
-            $attendance->entry_time->format('H:i'),
-            $attendance->exit_time->format('H:i'),
+            $entryTime,
+            $exitTime,
             $attendance->lunch_time
         );
 
-        if (!$scheduleDay || !$scheduleDay->is_working_day) {
-            return [
-                'employee_id' => $attendance->employee_id,
-                'date' => $attendance->work_date,
-                'entry_time' => $attendance->entry_time,
-                'exit_time' => $attendance->exit_time,
-                'lunch_time' => $attendance->lunch_time,
-                'worked_minutes' => $workedMinutes,
-                'scheduled_minutes' => 0,
-                'ordinary_minutes' => 0,
-                'overtime_minutes' => 0,
-            ];
+        /*
+        |--------------------------------------------------------------------------
+        | Sin horario
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$scheduleDay) {
+            return $this->emptyCalculation(
+                $attendance,
+                $workedMinutes
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Día no laboral
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$scheduleDay->is_working_day) {
+            return $this->emptyCalculation(
+                $attendance,
+                $workedMinutes
+            );
         }
 
         $scheduledMinutes = $scheduleDay->ordinary_minutes;
@@ -171,16 +198,183 @@ class AttendanceService
             $scheduledMinutes
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Clasificación de horas
+        |--------------------------------------------------------------------------
+        */
+
+        $classification = $this->classifyWorkedTime(
+            $attendance,
+            $workDate,
+            $ordinaryMinutes,
+            $overtimeMinutes
+        );
+
         return [
             'employee_id' => $attendance->employee_id,
             'date' => $attendance->work_date,
             'entry_time' => $attendance->entry_time,
             'exit_time' => $attendance->exit_time,
             'lunch_time' => $attendance->lunch_time,
+
             'worked_minutes' => $workedMinutes,
             'scheduled_minutes' => $scheduledMinutes,
             'ordinary_minutes' => $ordinaryMinutes,
             'overtime_minutes' => $overtimeMinutes,
+
+            'hed_minutes' => $classification['hed_minutes'],
+            'hen_minutes' => $classification['hen_minutes'],
+            'hefd_minutes' => $classification['hefd_minutes'],
+            'hefn_minutes' => $classification['hefn_minutes'],
+            'rn_minutes' => $classification['rn_minutes'],
+            'rnf_minutes' => $classification['rnf_minutes'],
+        ];
+    }
+
+    /**
+     * Clasifica el tiempo trabajado.
+     *
+     * Se analiza minuto por minuto para poder separar correctamente
+     * jornada ordinaria, horas extras, horario nocturno y días festivos.
+     */
+    private function classifyWorkedTime(
+        AttendanceRecord $attendance,
+        Carbon $workDate,
+        int $ordinaryMinutes,
+        int $overtimeMinutes
+    ): array {
+        $result = [
+            'hed_minutes' => 0,
+            'hen_minutes' => 0,
+            'hefd_minutes' => 0,
+            'hefn_minutes' => 0,
+            'rn_minutes' => 0,
+            'rnf_minutes' => 0,
+        ];
+
+        $entry = $attendance->entry_time->copy();
+        $exit = $attendance->exit_time->copy();
+
+        /*
+         * Si la hora de salida es menor que la entrada,
+         * asumimos que la jornada termina al día siguiente.
+         */
+        if ($exit->lessThanOrEqualTo($entry)) {
+            $exit->addDay();
+        }
+
+        /*
+         * Para no contar el almuerzo como tiempo trabajado,
+         * primero calculamos el intervalo de trabajo.
+         *
+         * Actualmente el almuerzo se almacena en minutos,
+         * pero no tenemos registrada su posición exacta dentro
+         * de la jornada. Por eso, para la clasificación,
+         * se descontará al final del intervalo.
+         */
+
+        $totalMinutes = $entry->diffInMinutes($exit);
+
+        $effectiveMinutes = max(
+            0,
+            $totalMinutes - $attendance->lunch_time
+        );
+
+        /*
+         * Recorremos únicamente los minutos efectivamente trabajados.
+         */
+        for ($minute = 0; $minute < $effectiveMinutes; $minute++) {
+            $current = $entry->copy()->addMinutes($minute);
+
+            $isNight = $this->isNightTime($current);
+
+            $isHoliday = $this->isSundayOrHoliday($current);
+
+            /*
+             * Los primeros minutos corresponden a jornada ordinaria.
+             */
+            $isOvertime = $minute >= $ordinaryMinutes;
+
+            if ($isOvertime) {
+                if ($isHoliday && $isNight) {
+                    $result['hefn_minutes']++;
+                } elseif ($isHoliday) {
+                    $result['hefd_minutes']++;
+                } elseif ($isNight) {
+                    $result['hen_minutes']++;
+                } else {
+                    $result['hed_minutes']++;
+                }
+
+                continue;
+            }
+
+            /*
+             * Tiempo ordinario nocturno.
+             */
+            if ($isHoliday && $isNight) {
+                $result['rnf_minutes']++;
+            } elseif ($isNight) {
+                $result['rn_minutes']++;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Determina si un momento pertenece al horario nocturno.
+     *
+     * Nocturno:
+     * 19:00 - 06:00
+     */
+    private function isNightTime(Carbon $dateTime): bool
+    {
+        $minutes = (
+            ((int) $dateTime->format('H')) * 60
+        ) + (int) $dateTime->format('i');
+
+        return $minutes >= (19 * 60)
+            || $minutes < (6 * 60);
+    }
+
+    /**
+     * Determina si la fecha corresponde a domingo.
+     *
+     * Los festivos nacionales se incorporarán posteriormente
+     * mediante el módulo de festivos.
+     */
+    private function isSundayOrHoliday(Carbon $dateTime): bool
+    {
+        return $dateTime->isSunday();
+    }
+
+    /**
+     * Resultado vacío cuando no existe una jornada programada.
+     */
+    private function emptyCalculation(
+        AttendanceRecord $attendance,
+        int $workedMinutes
+    ): array {
+        return [
+            'employee_id' => $attendance->employee_id,
+            'date' => $attendance->work_date,
+            'entry_time' => $attendance->entry_time,
+            'exit_time' => $attendance->exit_time,
+            'lunch_time' => $attendance->lunch_time,
+
+            'worked_minutes' => $workedMinutes,
+            'scheduled_minutes' => 0,
+            'ordinary_minutes' => 0,
+            'overtime_minutes' => 0,
+
+            'hed_minutes' => 0,
+            'hen_minutes' => 0,
+            'hefd_minutes' => 0,
+            'hefn_minutes' => 0,
+            'rn_minutes' => 0,
+            'rnf_minutes' => 0,
         ];
     }
 
@@ -201,7 +395,8 @@ class AttendanceService
 
         if ($query->exists()) {
             throw ValidationException::withMessages([
-                'work_date' => 'Ya existe una jornada registrada para este empleado en esa fecha.',
+                'work_date' =>
+                    'Ya existe una jornada registrada para este empleado en esa fecha.',
             ]);
         }
     }
@@ -221,7 +416,8 @@ class AttendanceService
 
         if ($lunchMinutes >= $grossMinutes) {
             throw ValidationException::withMessages([
-                'lunch_time' => 'El tiempo de almuerzo no puede ser mayor o igual a la duración de la jornada.',
+                'lunch_time' =>
+                    'El tiempo de almuerzo no puede ser mayor o igual a la duración de la jornada.',
             ]);
         }
     }

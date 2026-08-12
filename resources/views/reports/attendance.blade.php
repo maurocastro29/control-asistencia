@@ -40,6 +40,11 @@
                     Filtrar
                 </x-button.primary>
 
+                <a href="{{ route('reports.attendance.export', request()->query()) }}"
+                    class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-700">
+                    Exportar Excel
+                </a>
+
             </div>
 
         </form>

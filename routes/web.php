@@ -130,16 +130,19 @@ Route::middleware('auth')->group(function () {
     |
     */
 
-    
+
     Route::prefix('reports')
-        ->name('reports.')
-        ->group(function () {
+    ->name('reports.')
+    ->group(function () {
 
-            Route::get('/attendance', [ReportController::class, 'attendance'])
-                ->name('attendance');
+        Route::get('/attendance', [ReportController::class, 'attendance'])
+            ->name('attendance');
 
-        });
-    
+        Route::get('/attendance/export', [ReportController::class, 'exportAttendance'])
+            ->name('attendance.export');
+
+    });
+
     /*
 |--------------------------------------------------------------------------
 | Administration
