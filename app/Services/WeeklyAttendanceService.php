@@ -6,6 +6,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use App\Models\WorkScheduleAdjustment;
 
 class WeeklyAttendanceService
 {
@@ -38,15 +39,24 @@ class WeeklyAttendanceService
             ->orderBy('work_date')
             ->get();
 
+        $adjustments = WorkScheduleAdjustment::query()
+            ->where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->where(function ($query) use ($weekStart, $weekEnd) {
+                $query
+                    ->whereBetween('adjustment_date', [
+                        $weekStart,
+                        $weekEnd,
+                    ])
+                    ->orWhereBetween('compensation_date', [
+                        $weekStart,
+                        $weekEnd,
+                    ]);
+            })
+            ->get();
+
         $totalScheduledMinutes = 0;
         $totalWorkedMinutes = 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Déficit acumulado pendiente de compensar
-        |--------------------------------------------------------------------------
-        */
-        $pendingDeficitMinutes = 0;
 
         $days = [];
 
@@ -59,9 +69,22 @@ class WeeklyAttendanceService
                     $date
                 );
 
-            $attendance = $attendanceRecords->first(
+            $attendances = $attendanceRecords->filter(
                 function ($record) use ($date) {
                     return $record->work_date->isSameDay($date);
+                }
+            );
+
+            $adjustmentsForDate = $adjustments->filter(
+                function ($adjustment) use ($date) {
+                    return (
+                        $adjustment->adjustment_date->isSameDay($date)
+                        ||
+                        (
+                            $adjustment->compensation_date
+                            && $adjustment->compensation_date->isSameDay($date)
+                        )
+                    );
                 }
             );
 
@@ -70,7 +93,7 @@ class WeeklyAttendanceService
 
             /*
             |--------------------------------------------------------------------------
-            | Horas programadas
+            | Horas programadas normales
             |--------------------------------------------------------------------------
             */
             if (
@@ -83,17 +106,77 @@ class WeeklyAttendanceService
 
             /*
             |--------------------------------------------------------------------------
-            | Horas realmente trabajadas
+            | Aplicar ajustes de reducción
             |--------------------------------------------------------------------------
             */
-            if ($attendance) {
-                $workedMinutes =
-                    $this->attendanceService
-                        ->calculateWorkedMinutes(
-                            $attendance->entry_time->format('H:i'),
-                            $attendance->exit_time->format('H:i'),
-                            $attendance->lunch_time
-                        );
+            $reducedMinutes = $adjustmentsForDate
+                ->filter(function ($adjustment) use ($date) {
+                    return $adjustment->adjustment_date->isSameDay($date);
+                })
+                ->sum('reduced_minutes');
+
+            $scheduledMinutes -= $reducedMinutes;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Aplicar compensaciones
+            |--------------------------------------------------------------------------
+            */
+            $compensationMinutes = $adjustmentsForDate
+                ->filter(function ($adjustment) use ($date) {
+                    return (
+                        $adjustment->compensation_date
+                        && $adjustment->compensation_date->isSameDay($date)
+                    );
+                })
+                ->sum('reduced_minutes');
+
+            $scheduledMinutes += $compensationMinutes;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Evitar valores negativos
+            |--------------------------------------------------------------------------
+            */
+            $scheduledMinutes = max(0, $scheduledMinutes);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Horas realmente trabajadas
+            |--------------------------------------------------------------------------
+            |
+            | Puede existir más de una jornada el mismo día.
+            |
+            */
+            if ($attendances->isNotEmpty()) {
+                foreach ($attendances as $attendance) {
+                    $workedMinutes +=
+                        $this->attendanceService
+                            ->calculateWorkedMinutes(
+                                $attendance->entry_time->format('H:i'),
+                                $attendance->exit_time->format('H:i'),
+                                $attendance->lunch_time
+                            );
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Compensación realmente realizada
+            |--------------------------------------------------------------------------
+            |
+            | Si existe una compensación programada para este día,
+            | las horas trabajadas se utilizan primero para cubrir
+            | dicha compensación.
+            |
+            */
+            $compensatedMinutes = 0;
+
+            if ($compensationMinutes > 0) {
+                $compensatedMinutes = min(
+                    $workedMinutes,
+                    $compensationMinutes
+                );
             }
 
             /*
@@ -105,41 +188,60 @@ class WeeklyAttendanceService
                 $workedMinutes - $scheduledMinutes;
 
             $deficitMinutes = 0;
-            $compensatedMinutes = 0;
             $overtimeMinutes = 0;
 
             /*
             |--------------------------------------------------------------------------
-            | Caso 1: trabajó menos de lo programado
+            | Déficit del día
             |--------------------------------------------------------------------------
             */
             if ($differenceMinutes < 0) {
 
-                $deficitMinutes = abs($differenceMinutes);
+                /*
+                |--------------------------------------------------------------------------
+                | Si existe una reducción autorizada, el déficit generado
+                | por dicha reducción no es un déficit real del trabajador.
+                |--------------------------------------------------------------------------
+                */
+                if ($reducedMinutes > 0) {
 
-                $pendingDeficitMinutes += $deficitMinutes;
+                    $deficitMinutes = max(
+                        0,
+                        abs($differenceMinutes) - $reducedMinutes
+                    );
 
+                } else {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Déficit real del trabajador
+                    |--------------------------------------------------------------------------
+                    */
+                    $deficitMinutes =
+                        abs($differenceMinutes);
+                }
             }
+
             /*
             |--------------------------------------------------------------------------
-            | Caso 2: trabajó más de lo programado
+            | Excedente del día
             |--------------------------------------------------------------------------
+            |
+            | Todo tiempo trabajado por encima del horario efectivo
+            | del día se considera hora extra.
+            |
             */
             elseif ($differenceMinutes > 0) {
 
-                $availableMinutes = $differenceMinutes;
-
-                $compensatedMinutes = min(
-                    $availableMinutes,
-                    $pendingDeficitMinutes
-                );
-
-                $pendingDeficitMinutes -= $compensatedMinutes;
-
                 $overtimeMinutes =
-                    $availableMinutes - $compensatedMinutes;
+                    $differenceMinutes;
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Acumulados semanales
+            |--------------------------------------------------------------------------
+            */
             $totalScheduledMinutes +=
                 $scheduledMinutes;
 
@@ -147,7 +249,8 @@ class WeeklyAttendanceService
                 $workedMinutes;
 
             $days[] = [
-                'date' => $date->copy(),
+                'date' =>
+                    $date->copy(),
 
                 'scheduled_minutes' =>
                     $scheduledMinutes,
@@ -168,7 +271,7 @@ class WeeklyAttendanceService
                     $overtimeMinutes,
 
                 'has_attendance' =>
-                    (bool) $attendance,
+                    $attendances->isNotEmpty(),
 
                 'is_scheduled_day' =>
                     $scheduledMinutes > 0,
@@ -204,7 +307,7 @@ class WeeklyAttendanceService
                 $balanceMinutes,
 
             'deficit_minutes' =>
-                $pendingDeficitMinutes,
+                collect($days)->sum('deficit_minutes'),
 
             'overtime_minutes' =>
                 collect($days)->sum('overtime_minutes'),

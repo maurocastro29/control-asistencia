@@ -21,7 +21,9 @@ class AttendanceService
 
         $this->validateDuplicateAttendance(
             $data['employee_id'],
-            $data['work_date']
+            $data['work_date'],
+            $data['entry_time'],
+            $data['exit_time']
         );
 
         $this->validateLunchTime(
@@ -49,6 +51,8 @@ class AttendanceService
         $this->validateDuplicateAttendance(
             $data['employee_id'],
             $data['work_date'],
+            $data['entry_time'],
+            $data['exit_time'],
             $attendanceRecord->id
         );
 
@@ -379,25 +383,62 @@ class AttendanceService
     }
 
     /**
-     * Valida duplicidad.
+     * Valida que la jornada no se solape con otra jornada
+     * del mismo empleado en la misma fecha.
      */
     private function validateDuplicateAttendance(
         int $employeeId,
         string $workDate,
+        string $entryTime,
+        string $exitTime,
         ?int $ignoreId = null
     ): void {
-        $query = AttendanceRecord::where('employee_id', $employeeId)
+        $query = AttendanceRecord::query()
+            ->where('employee_id', $employeeId)
             ->whereDate('work_date', $workDate);
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
-        if ($query->exists()) {
-            throw ValidationException::withMessages([
-                'work_date' =>
-                    'Ya existe una jornada registrada para este empleado en esa fecha.',
-            ]);
+        $existingRecords = $query->get();
+
+        $newEntry = Carbon::parse($entryTime);
+        $newExit = Carbon::parse($exitTime);
+
+        /*
+        * Si la jornada termina después de medianoche,
+        * la salida pertenece al día siguiente.
+        */
+        if ($newExit->lessThanOrEqualTo($newEntry)) {
+            $newExit->addDay();
+        }
+
+        foreach ($existingRecords as $existingRecord) {
+            $existingEntry = $existingRecord->entry_time->copy();
+            $existingExit = $existingRecord->exit_time->copy();
+
+            if ($existingExit->lessThanOrEqualTo($existingEntry)) {
+                $existingExit->addDay();
+            }
+
+            /*
+            * Existe solapamiento cuando:
+            *
+            * nueva entrada < salida existente
+            * Y
+            * nueva salida > entrada existente
+            */
+            $hasOverlap =
+                $newEntry->lessThan($existingExit)
+                && $newExit->greaterThan($existingEntry);
+
+            if ($hasOverlap) {
+                throw ValidationException::withMessages([
+                    'entry_time' =>
+                        'La jornada se cruza con otra jornada registrada para este empleado en esa fecha.',
+                ]);
+            }
         }
     }
 

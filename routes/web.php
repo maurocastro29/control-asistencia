@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\WorkScheduleAdjustmentController;
 use App\Http\Controllers\WorkScheduleController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -144,14 +145,25 @@ Route::middleware('auth')->group(function () {
     });
 
     /*
-|--------------------------------------------------------------------------
-| Administration
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | Administration
+    |--------------------------------------------------------------------------
+    */
 
-    Route::resource('users', UserController::class)
-            ->middleware('permission:users.view');
-    Route::resource('settings', SettingController::class);
-});
+        Route::resource('users', UserController::class)
+                ->middleware('permission:users.view');
+        Route::resource('settings', SettingController::class);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ajuste de jornada laboral
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'work-schedule-adjustments',
+        WorkScheduleAdjustmentController::class
+    );
 
 require __DIR__.'/auth.php';

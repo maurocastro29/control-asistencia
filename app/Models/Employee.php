@@ -75,4 +75,8 @@ class Employee extends Model
         return $this->belongsTo(WorkSchedule::class);
     }
 
+    public function workScheduleAdjustments()
+    {
+        return $this->hasMany(WorkScheduleAdjustment::class);
+    }
 }
