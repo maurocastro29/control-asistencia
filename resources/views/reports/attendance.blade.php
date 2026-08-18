@@ -1,10 +1,14 @@
 <x-app-layout>
-    <x-layout.page-header title="Reporte de Asistencia" subtitle="Consulta y analiza las jornadas registradas" />
-
+    <x-layout.page-header title="Reporte de Asistencia" subtitle="Consulta y analiza las jornadas registradas">
+        <x-slot:actions>
+            <x-button.primary :href="route('attendance.register')">
+                Nueva asistencia
+            </x-button.primary>
+        </x-slot:actions>
+    </x-layout.page-header>
     {{-- ==========================================
     FILTROS
-=========================================== --}}
-
+    ========================================== --}}
     <x-layout.card>
 
         <form action="{{ route('reports.attendance') }}" method="GET">

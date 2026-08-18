@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleAdjustmentController;
 use App\Http\Controllers\WorkScheduleController;
+use App\Http\Controllers\HolidayController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -150,10 +151,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-        Route::resource('users', UserController::class)
-                ->middleware('permission:users.view');
-        Route::resource('settings', SettingController::class);
-    });
+    Route::resource('users', UserController::class)
+            ->middleware('permission:users.view');
+
+    Route::resource('settings', SettingController::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -165,5 +166,16 @@ Route::middleware('auth')->group(function () {
         'work-schedule-adjustments',
         WorkScheduleAdjustmentController::class
     );
+    Route::post(
+        'work-schedule-adjustments/{workScheduleAdjustment}/canceled',
+        [WorkScheduleAdjustmentController::class, 'canceled']
+    )->name('work-schedule-adjustments.canceled');
+    Route::post(
+        'work-schedule-adjustments/{workScheduleAdjustment}/complete',
+        [WorkScheduleAdjustmentController::class, 'complete']
+    )->name('work-schedule-adjustments.complete');
+
+    Route::resource('holidays', HolidayController::class);
+});
 
 require __DIR__.'/auth.php';

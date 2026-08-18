@@ -18,7 +18,7 @@
 
             <x-table.head>
 
-                <tr>
+                <x-table.row>
 
                     <x-table.th>
                         Usuario
@@ -44,7 +44,7 @@
                         Acciones
                     </x-table.th>
 
-                </tr>
+                </x-table.row>
 
             </x-table.head>
 

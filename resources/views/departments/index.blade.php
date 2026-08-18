@@ -12,7 +12,7 @@
 
     </x-layout.page-header>
 
-    <x-layout.card class="m-6">
+    <x-layout.card>
 
         <x-table.table>
 

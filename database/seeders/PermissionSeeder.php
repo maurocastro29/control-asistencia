@@ -128,6 +128,26 @@ class PermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
+            | Holidays
+            |--------------------------------------------------------------------------
+            */
+            'holidays.view',
+            'holidays.create',
+            'holidays.edit',
+            'holidays.delete',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Work Schedules adjustments
+            |--------------------------------------------------------------------------
+            */
+            'work-schedules-adjustments.view',
+            'work-schedules-adjustments.create',
+            'work-schedules-adjustments.edit',
+            'work-schedules-adjustments.delete',
+
+            /*
+            |--------------------------------------------------------------------------
             | Reports
             |--------------------------------------------------------------------------
             */

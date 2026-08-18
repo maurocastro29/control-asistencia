@@ -20,7 +20,7 @@
         {{-- Navbar --}}
         @include('layouts.navigation')
 
-        <div class="flex">
+        <div class="flex pt-16">
 
             {{-- Sidebar --}}
             @include('layouts.sidebar')

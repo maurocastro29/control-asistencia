@@ -1,11 +1,11 @@
 <x-app-layout>
 
-    <x-layout.page-header title="Posiciones" subtitle="Administración de las posiciones">
+    <x-layout.page-header title="Cargos" subtitle="Administración de los cargos de la compañía">
 
         <x-slot:actions>
 
             <x-button.primary :href="route('positions.create')">
-                Nueva Posición
+                Nuevo Cargo
             </x-button.primary>
 
         </x-slot:actions>
