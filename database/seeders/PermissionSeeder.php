@@ -145,6 +145,7 @@ class PermissionSeeder extends Seeder
             'work-schedules-adjustments.create',
             'work-schedules-adjustments.edit',
             'work-schedules-adjustments.delete',
+            'work-schedules-adjustments.complete',
 
             /*
             |--------------------------------------------------------------------------

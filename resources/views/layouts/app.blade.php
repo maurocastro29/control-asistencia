@@ -26,7 +26,7 @@
             @include('layouts.sidebar')
 
             {{-- Contenido --}}
-            <div class="flex-1">
+            <div class="min-w-0 flex-1">
 
                 @isset($header)
                     <header class="bg-white border-b shadow-sm">

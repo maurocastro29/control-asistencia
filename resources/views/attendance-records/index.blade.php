@@ -1,9 +1,11 @@
 <x-app-layout>
     <x-layout.page-header title="Jornadas" subtitle="Jornadas Registradas">
         <x-slot:actions>
-            <x-button.primary :href="route('attendance.register')">
-                Registrar nueva asistencia
-            </x-button.primary>
+            @can('attendance-records.create')
+                <x-button.primary :href="route('attendance.register')">
+                    Registrar nueva asistencia
+                </x-button.primary>
+            @endcan
         </x-slot:actions>
     </x-layout.page-header>
     <x-layout.card>
@@ -19,24 +21,12 @@
         <x-table.table>
             <x-table.head>
                 <x-table.row>
-                    <x-table.th>
-                        Empleado
-                    </x-table.th>
-                    <x-table.th>
-                        Fecha
-                    </x-table.th>
-                    <x-table.th>
-                        Entrada
-                    </x-table.th>
-                    <x-table.th>
-                        Salida
-                    </x-table.th>
-                    <x-table.th>
-                        Almuerzo
-                    </x-table.th>
-                    <x-table.th class="w-40">
-                        Acciones
-                    </x-table.th>
+                    <x-table.th>Empleado</x-table.th>
+                    <x-table.th>Fecha</x-table.th>
+                    <x-table.th>Entrada</x-table.th>
+                    <x-table.th>Salida</x-table.th>
+                    <x-table.th>Almuerzo</x-table.th>
+                    <x-table.th class="w-40">Acciones</x-table.th>
                 </x-table.row>
             </x-table.head>
             <x-table.body>
@@ -51,9 +41,11 @@
                             <x-button.secondary class="bg-indigo-700 hover:bg-indigo-600" :href="route('attendance-records.show', $attendanceRecord)">
                                 Ver
                             </x-button.secondary>
-                            <x-button.secondary class="bg-green-700 hover:bg-green-600" :href="route('attendance-records.edit', $attendanceRecord)">
-                                Editar
-                            </x-button.secondary>
+                            @can('attendance-records.edit')
+                                <x-button.secondary class="bg-green-700 hover:bg-green-600" :href="route('attendance-records.edit', $attendanceRecord)">
+                                    Editar
+                                </x-button.secondary>
+                            @endcan
                         </x-table.td>
                     </x-table.row>
                 @endforeach

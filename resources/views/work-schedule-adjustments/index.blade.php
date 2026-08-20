@@ -2,9 +2,11 @@
     <x-layout.page-header title="Ajustes de jornada"
         subtitle="Gestiona las reducciones y compensaciones de jornada laboral.">
         <x-slot:actions>
-            <x-button.primary :href="route('work-schedule-adjustments.create')">
-                Nuevo Ajuste
-            </x-button.primary>
+            @can('work-schedules-adjustments.create')
+                <x-button.primary :href="route('work-schedule-adjustments.create')">
+                    Nuevo Ajuste
+                </x-button.primary>
+            @endcan
         </x-slot:actions>
     </x-layout.page-header>
     <x-layout.card>
@@ -16,24 +18,12 @@
         <x-table.table>
             <x-table.head>
                 <x-table.row>
-                    <x-table.th>
-                        Empleado
-                    </x-table.th>
-                    <x-table.th>
-                        Fecha ajuste
-                    </x-table.th>
-                    <x-table.th>
-                        Reducción
-                    </x-table.th>
-                    <x-table.th>
-                        Fecha compensación
-                    </x-table.th>
-                    <x-table.th>
-                        Estado
-                    </x-table.th>
-                    <x-table.th class="w-48">
-                        Acciones
-                    </x-table.th>
+                    <x-table.th>Empleado</x-table.th>
+                    <x-table.th>Fecha ajuste</x-table.th>
+                    <x-table.th>Reducción</x-table.th>
+                    <x-table.th>Fecha compensación</x-table.th>
+                    <x-table.th>Estado</x-table.th>
+                    <x-table.th class="w-48">Acciones</x-table.th>
                 </x-table.row>
             </x-table.head>
             <x-table.body>
@@ -54,9 +44,7 @@
                             @if ($adjustment->compensation_date)
                                 {{ $adjustment->compensation_date->format('d/m/Y') }}
                             @else
-                                <span class="text-slate-400">
-                                    Sin compensación
-                                </span>
+                                <span class="text-slate-400">Sin compensación</span>
                             @endif
                         </x-table.td>
                         <x-table.td>
@@ -80,31 +68,37 @@
                         <x-table.td class="flex gap-2">
                             <a class="text-gray-700 hover:text-gray-600 hover:underline mt-2"
                                 href="{{ route('work-schedule-adjustments.show', $adjustment) }}">Ver</a>
-                            @if ($adjustment->is_active && $adjustment->status === 'pending')
-                                <a class="text-blue-700 hover:text-indigo-600 hover:underline mt-2"
-                                    href="{{ route('work-schedule-adjustments.edit', $adjustment) }}">Editar</a>
-                            @endif
-                            @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'cancelled')
-                                <form action="{{ route('work-schedule-adjustments.complete', $adjustment) }}"
-                                    method="POST" onsubmit="return confirm('¿Deseas aprobar este ajuste de jornada?')">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none">
-                                        Completar
-                                    </button>
-                                </form>
-                            @endif
-                            @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'completed')
-                                <form action="{{ route('work-schedule-adjustments.canceled', $adjustment) }}"
-                                    method="POST"
-                                    onsubmit="return confirm('¿Deseas cancelar este ajuste de jornada?')">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 focus:outline-none">
-                                        Cancelar
-                                    </button>
-                                </form>
-                            @endif
+                            @can('work-schedules-adjustments.edit')
+                                @if ($adjustment->is_active && $adjustment->status === 'pending')
+                                    <a class="text-blue-700 hover:text-indigo-600 hover:underline mt-2"
+                                        href="{{ route('work-schedule-adjustments.edit', $adjustment) }}">Editar</a>
+                                @endif
+                            @endcan
+                            @can('work-schedules-adjustments.complete')
+                                @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'cancelled')
+                                    <form action="{{ route('work-schedule-adjustments.complete', $adjustment) }}"
+                                        method="POST" onsubmit="return confirm('¿Deseas aprobar este ajuste de jornada?')">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none">
+                                            Completar
+                                        </button>
+                                    </form>
+                                @endif
+                            @endcan
+                            @can('work-schedules-adjustments.delete')
+                                @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'completed')
+                                    <form action="{{ route('work-schedule-adjustments.canceled', $adjustment) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('¿Deseas cancelar este ajuste de jornada?')">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 focus:outline-none">
+                                            Cancelar
+                                        </button>
+                                    </form>
+                                @endif
+                            @endcan
                         </x-table.td>
                     </x-table.row>
                 @empty

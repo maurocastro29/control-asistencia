@@ -1,12 +1,13 @@
 <x-app-layout>
-
-    <x-slot name="header">
-        <x-layout.page-header title="Editar festivo" description="Actualiza la información del día festivo." />
-    </x-slot>
-
+    <x-layout.page-header class="m-6" title="Editar festivo" subtitle="Actualiza la información del día festivo.">
+        <x-slot:actions>
+            <x-button.primary :href="route('holidays.index')">
+                Volver
+            </x-button.primary>
+        </x-slot:actions>
+    </x-layout.page-header>
     <div class="py-6">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-
             @if ($errors->any())
                 <div class="mb-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
                     <ul class="list-disc list-inside text-sm text-red-700">
@@ -16,36 +17,22 @@
                     </ul>
                 </div>
             @endif
-
             <div class="bg-white shadow-sm sm:rounded-lg">
-
                 <form action="{{ route('holidays.update', $holiday) }}" method="POST" class="p-6">
-
                     @method('PUT')
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                         @include('holidays._form')
-
                     </div>
-
                     <div class="mt-8 flex justify-end gap-3">
-
                         <x-button.secondary href="{{ route('holidays.index') }}">
                             Cancelar
                         </x-button.secondary>
-
                         <x-button.primary type="submit">
                             Actualizar
                         </x-button.primary>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
     </div>
-
 </x-app-layout>

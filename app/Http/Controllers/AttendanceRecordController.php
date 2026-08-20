@@ -47,6 +47,7 @@ class AttendanceRecordController extends Controller
         ->orderBy('entry_time')
         ->paginate(15);
 
+    dd($attendanceRecords);
     return view('attendance-records.index', compact(
         'attendanceRecords',
         'lastWorkDate'

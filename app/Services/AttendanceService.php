@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
+use App\Models\Holiday;
+use App\Models\WorkScheduleAdjustment;
 use App\Models\WorkScheduleDay;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class AttendanceService
@@ -489,5 +492,292 @@ class AttendanceService
             intdiv($minutes, 60),
             $minutes % 60
         );
+    }
+
+    /**
+     * Construye la información de asistencia de un empleado
+     * para un rango de fechas.
+     */
+    public function buildReportRecords(
+        Employee $employee,
+        Carbon $dateFrom,
+        Carbon $dateTo
+    ): array {
+        $calculationFrom = $dateFrom->copy()->startOfWeek(Carbon::MONDAY);
+        $attendances = AttendanceRecord::query()
+            ->where('employee_id', $employee->id)
+            ->whereBetween('work_date', [
+                $calculationFrom->copy()->subDay()->toDateString(),
+                $dateTo->toDateString(),
+            ])
+            ->orderBy('work_date')
+            ->orderBy('entry_time')
+            ->get()
+            ->groupBy(fn (AttendanceRecord $record) => $record->work_date->format('Y-m-d'));
+
+        $adjustments = WorkScheduleAdjustment::query()
+            ->where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->where('status', WorkScheduleAdjustment::STATUS_COMPLETED)
+            ->where(function ($query) use ($calculationFrom, $dateTo) {
+                $query->whereBetween('adjustment_date', [
+                    $calculationFrom->toDateString(),
+                    $dateTo->toDateString(),
+                ])->orWhereBetween('compensation_date', [
+                    $calculationFrom->toDateString(),
+                    $dateTo->toDateString(),
+                ]);
+            })
+            ->get();
+
+        $holidays = Holiday::query()
+            ->where('is_active', true)
+            ->whereBetween('date', [
+                $calculationFrom->toDateString(),
+                $dateTo->toDateString(),
+            ])
+            ->pluck('date')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->flip();
+
+        $report = [];
+        $weeklyBudget = $employee->workSchedule?->weekly_minutes ?? 2520;
+        for ($date = $calculationFrom->copy(); $date->lte($dateTo); $date->addDay()) {
+            if ($date->isMonday() && !$date->isSameDay($calculationFrom)) {
+                $weeklyBudget = $employee->workSchedule?->weekly_minutes ?? 2520;
+            }
+            $dateKey = $date->toDateString();
+            $dayRecords = $attendances->get($dateKey, collect());
+            $overnightRecords = $attendances
+                ->get($date->copy()->subDay()->toDateString(), collect())
+                ->filter(fn (AttendanceRecord $record) =>
+                    $record->exit_time->format('H:i') <= $record->entry_time->format('H:i'));
+            $dayRecords = $dayRecords->merge($overnightRecords)->unique('id')->values();
+            $scheduleDay = $this->getEmployeeScheduleForDate($employee, $date);
+            $dayResult = $this->calculateReportDay(
+                $employee,
+                $date,
+                $dayRecords,
+                $scheduleDay,
+                $adjustments,
+                $holidays->has($dateKey),
+                $weeklyBudget
+            );
+
+            if ($dayRecords->isEmpty()) {
+                if ($holidays->has($dateKey)) {
+                    $weeklyBudget = max(
+                        0,
+                        $weeklyBudget - $dayResult['scheduled_minutes']
+                    );
+                }
+                continue;
+            }
+
+            $dayOrdinaryMinutes = 0;
+            foreach ($dayRecords as $attendance) {
+                $part = $dayResult['by_attendance'][$attendance->id] ?? $this->emptyTimePart();
+                $dayOrdinaryMinutes += $part['ordinary_minutes'];
+                if ($date->greaterThanOrEqualTo($dateFrom)) {
+                    $report[] = $this->reportRow(
+                        $employee,
+                        $date,
+                        $attendance,
+                        $scheduleDay,
+                        $dayResult,
+                        $part['worked_minutes'],
+                        $part['ordinary_minutes'],
+                        $part
+                    );
+                }
+            }
+            $weeklyBudget = max(0, $weeklyBudget - $dayOrdinaryMinutes);
+        }
+
+        return $report;
+    }
+
+    private function calculateReportDay(
+        Employee $employee,
+        Carbon $date,
+        Collection $attendances,
+        ?WorkScheduleDay $scheduleDay,
+        Collection $adjustments,
+        bool $isHoliday,
+        int $weeklyBudget
+    ): array {
+        $baseMinutes = $scheduleDay?->is_working_day
+            ? $scheduleDay->ordinary_minutes
+            : 0;
+        $reducedMinutes = $adjustments
+            ->filter(fn (WorkScheduleAdjustment $adjustment) =>
+                $adjustment->adjustment_date?->isSameDay($date))
+            ->sum('reduced_minutes');
+        $compensationMinutes = $adjustments
+            ->filter(fn (WorkScheduleAdjustment $adjustment) =>
+                $adjustment->compensation_date?->isSameDay($date))
+            ->sum('reduced_minutes');
+        $scheduledMinutes = min(
+            $weeklyBudget,
+            max(0, $baseMinutes - $reducedMinutes + $compensationMinutes)
+        );
+        $segments = $this->attendanceSegmentsForDate($attendances, $date);
+        $parts = [];
+        $workedMinutes = 0;
+        foreach ($segments as $segment) {
+            $parts[$segment['attendance']->id] ??= $this->emptyTimePart();
+            $parts[$segment['attendance']->id]['worked_minutes'] += $segment['minutes'];
+            $workedMinutes += $segment['minutes'];
+        }
+
+        $scheduleWindow = $this->scheduleWindowForDate($employee, $date, $scheduleDay);
+        $ordinaryRemaining = $scheduledMinutes;
+        $normalOrdinaryRemaining = max(0, $baseMinutes - $reducedMinutes);
+        $result = [
+            'scheduled_minutes' => $scheduledMinutes,
+            'worked_minutes' => $workedMinutes,
+            'ordinary_minutes' => 0,
+            'by_attendance' => $parts,
+        ];
+
+        foreach ($segments as $segment) {
+            $current = $segment['start']->copy();
+            for ($minute = 0; $minute < $segment['minutes']; $minute++) {
+                $insideSchedule = $scheduleWindow
+                    && $current->greaterThanOrEqualTo($scheduleWindow[0])
+                    && $current->lessThan($scheduleWindow[1]);
+                $afterSchedule = $scheduleWindow
+                    && $current->greaterThanOrEqualTo($scheduleWindow[1]);
+                $isOrdinary = false;
+
+                if (!$isHoliday && $ordinaryRemaining > 0) {
+                    $isOrdinary = $insideSchedule
+                        || ($afterSchedule && $normalOrdinaryRemaining <= 0)
+                        || (!$scheduleWindow && $normalOrdinaryRemaining <= 0)
+                        || ($scheduleWindow
+                            && $current->lessThan($scheduleWindow[0])
+                            && $normalOrdinaryRemaining > 0);
+                }
+
+                if ($isHoliday) {
+                    $category = $this->isNightTime($current) ? 'hefn_minutes' : 'hefd_minutes';
+                } elseif ($isOrdinary) {
+                    $ordinaryRemaining--;
+                    if ($normalOrdinaryRemaining > 0) {
+                        $normalOrdinaryRemaining--;
+                    }
+                    $category = $current->isSunday()
+                        ? ($this->isNightTime($current) ? 'rnf_minutes' : 'rn_minutes')
+                        : null;
+                } else {
+                    $category = $current->isSunday()
+                        ? ($this->isNightTime($current) ? 'hefn_minutes' : 'hefd_minutes')
+                        : ($this->isNightTime($current) ? 'hen_minutes' : 'hed_minutes');
+                }
+
+                $part = &$result['by_attendance'][$segment['attendance']->id];
+                if ($isOrdinary) {
+                    $part['ordinary_minutes']++;
+                    $result['ordinary_minutes']++;
+                } else {
+                    $part['overtime_minutes']++;
+                }
+                if ($category) {
+                    $part[$category]++;
+                }
+                unset($part);
+                $current->addMinute();
+            }
+        }
+
+        return $result;
+    }
+
+    private function attendanceSegmentsForDate(Collection $attendances, Carbon $date): array
+    {
+        $segments = [];
+        foreach ($attendances as $attendance) {
+            $start = $date->copy()->setTimeFromTimeString($attendance->entry_time->format('H:i'));
+            $end = $date->copy()->setTimeFromTimeString($attendance->exit_time->format('H:i'));
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+            $end->subMinutes($attendance->lunch_time);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $dayStart->copy()->addDay();
+            $segmentStart = $start->max($dayStart);
+            $segmentEnd = $end->min($dayEnd);
+            if ($segmentEnd->greaterThan($segmentStart)) {
+                $segments[] = [
+                    'attendance' => $attendance,
+                    'start' => $segmentStart,
+                    'minutes' => $segmentStart->diffInMinutes($segmentEnd),
+                ];
+            }
+        }
+        return $segments;
+    }
+
+    private function scheduleWindowForDate(
+        Employee $employee,
+        Carbon $date,
+        ?WorkScheduleDay $scheduleDay
+    ): ?array {
+        if (!$scheduleDay?->is_working_day || !$scheduleDay->entry_time || !$scheduleDay->exit_time) {
+            $previousDay = $date->copy()->subDay();
+            $previousSchedule = $this->getEmployeeScheduleForDate($employee, $previousDay);
+            if (!$previousSchedule?->is_working_day || !$previousSchedule->entry_time || !$previousSchedule->exit_time) {
+                return null;
+            }
+            $start = $previousDay->copy()->setTimeFromTimeString($previousSchedule->entry_time->format('H:i'));
+            $end = $previousDay->copy()->setTimeFromTimeString($previousSchedule->exit_time->format('H:i'));
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+            return [$start->max($date->copy()->startOfDay()), $end];
+        }
+
+        $start = $date->copy()->setTimeFromTimeString($scheduleDay->entry_time->format('H:i'));
+        $end = $date->copy()->setTimeFromTimeString($scheduleDay->exit_time->format('H:i'));
+        if ($end->lessThanOrEqualTo($start)) {
+            $end->addDay();
+        }
+        return [$start, $end];
+    }
+
+    private function emptyTimePart(): array
+    {
+        return array_fill_keys([
+            'worked_minutes', 'ordinary_minutes', 'overtime_minutes',
+            'hed_minutes', 'hen_minutes', 'hefd_minutes', 'hefn_minutes',
+            'rn_minutes', 'rnf_minutes',
+        ], 0);
+    }
+
+    private function reportRow(
+        Employee $employee,
+        Carbon $date,
+        ?AttendanceRecord $attendance,
+        ?WorkScheduleDay $scheduleDay,
+        array $dayResult,
+        int $workedMinutes,
+        int $ordinaryMinutes,
+        ?array $part = null
+    ): array {
+        $part ??= $this->emptyTimePart();
+        return array_merge([
+            'employee' => $employee,
+            'work_date' => $date->copy(),
+            'attendance' => $attendance,
+            'schedule_day' => $scheduleDay,
+            'scheduled_minutes' => $dayResult['scheduled_minutes'],
+            'worked_minutes' => $workedMinutes,
+            'ordinary_minutes' => $ordinaryMinutes,
+            'overtime_minutes' => $part['overtime_minutes'],
+            'missing_minutes' => max(0, $dayResult['scheduled_minutes'] - $dayResult['worked_minutes']),
+            'status' => $attendance ? 'registered' : 'not_registered',
+        ], array_intersect_key($part, array_flip([
+            'hed_minutes', 'hen_minutes', 'hefd_minutes', 'hefn_minutes', 'rn_minutes', 'rnf_minutes',
+        ])));
     }
 }

@@ -1,9 +1,11 @@
 <x-app-layout>
     <x-layout.page-header class="m-6" title="Festivos" subtitle="Gestiona los días festivos registrados en el sistema.">
         <x-slot:actions>
-            <x-button.primary :href="route('holidays.create')">
-                Nuevo festivo
-            </x-button.primary>
+            @can('holidays.create')
+                <x-button.primary :href="route('holidays.create')">
+                    Nuevo festivo
+                </x-button.primary>
+            @endcan
         </x-slot:actions>
     </x-layout.page-header>
     <x-layout.card>
@@ -56,19 +58,23 @@
                                 <x-button.secondary href="{{ route('holidays.show', $holiday) }}">
                                     Ver
                                 </x-button.secondary>
-                                <x-button.secondary href="{{ route('holidays.edit', $holiday) }}">
-                                    Editar
-                                </x-button.secondary>
-                                @if ($holiday->is_active)
-                                    <form action="{{ route('holidays.destroy', $holiday) }}" method="POST"
-                                        onsubmit="return confirm('¿Deseas desactivar este festivo?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-button.primary class="bg-red-500 hover:bg-red-600" type="submit">
-                                            Desactivar
-                                        </x-button.primary>
-                                    </form>
-                                @endif
+                                @can('holidays.edit')
+                                    <x-button.secondary href="{{ route('holidays.edit', $holiday) }}">
+                                        Editar
+                                    </x-button.secondary>
+                                @endcan
+                                @can('holidays.delete')
+                                    @if ($holiday->is_active)
+                                        <form action="{{ route('holidays.destroy', $holiday) }}" method="POST"
+                                            onsubmit="return confirm('¿Deseas desactivar este festivo?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-button.primary class="bg-red-500 hover:bg-red-600" type="submit">
+                                                Desactivar
+                                            </x-button.primary>
+                                        </form>
+                                    @endif
+                                @endcan
                             </div>
                         </x-table.td>
                     </x-table.row>
