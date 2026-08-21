@@ -1,64 +1,28 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
+        <h2 class="text-lg font-semibold text-slate-800">
+            Información personal
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
+        <p class="mt-1 text-sm text-slate-500">
+            Actualiza los datos con los que te identifican dentro del sistema.
         </p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
-
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6">
         @csrf
         @method('patch')
 
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <x-form.input name="username" label="Usuario" :value="old('username', $user->username)" required autocomplete="username" />
+            <x-form.input name="first_name" label="Primer nombre" :value="old('first_name', $user->first_name)" required autocomplete="given-name" />
+            <x-form.input name="middle_name" label="Segundo nombre" :value="old('middle_name', $user->middle_name)" autocomplete="additional-name" />
+            <x-form.input name="first_last_name" label="Primer apellido" :value="old('first_last_name', $user->first_last_name)" required autocomplete="family-name" />
+            <x-form.input name="second_last_name" label="Segundo apellido" :value="old('second_last_name', $user->second_last_name)" />
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
-
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
+        <div class="mt-6 flex justify-end">
+            <x-button.primary type="submit">Guardar información</x-button.primary>
         </div>
     </form>
 </section>

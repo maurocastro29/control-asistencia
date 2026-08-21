@@ -7,10 +7,6 @@
                 <p>{{ $user->username }}</p>
             </div>
             <div>
-                <strong>Rol</strong>
-                <p>{{ $user->role->name }}</p>
-            </div>
-            <div>
                 <strong>Nombre completo</strong>
                 <p>{{ $user->full_name }}</p>
             </div>

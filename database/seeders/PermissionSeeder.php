@@ -164,11 +164,61 @@ class PermissionSeeder extends Seeder
             'settings.edit',
         ];
 
-        foreach ($permissions as $permission) {
+        $moduleNames = [
+            'dashboard' => 'Panel principal',
+            'users' => 'Usuarios',
+            'roles' => 'Roles',
+            'permissions' => 'Permisos',
+            'employees' => 'Empleados',
+            'departments' => 'Departamentos',
+            'positions' => 'Cargos',
+            'document-types' => 'Tipos de documento',
+            'work-schedules' => 'Horarios de trabajo',
+            'attendance' => 'Asistencia',
+            'attendance-records' => 'Historial de asistencia',
+            'holidays' => 'Festivos',
+            'work-schedules-adjustments' => 'Ajustes de jornada',
+            'reports' => 'Reportes',
+            'settings' => 'Configuración',
+        ];
 
-            Permission::firstOrCreate([
+        $actionNames = [
+            'view' => 'Consultar',
+            'create' => 'Crear',
+            'register' => 'Registrar',
+            'edit' => 'Editar',
+            'delete' => 'Eliminar',
+            'export' => 'Exportar',
+            'complete' => 'Completar',
+        ];
+
+        $specificNames = [
+            'dashboard.view' => 'Consultar panel principal',
+            'attendance.register' => 'Registrar asistencia',
+            'attendance-records.view' => 'Consultar historial de asistencia',
+            'work-schedules-adjustments.complete' => 'Completar ajustes de jornada',
+            'reports.view' => 'Consultar reportes',
+            'reports.export' => 'Exportar reportes',
+            'settings.view' => 'Consultar configuración',
+            'settings.edit' => 'Administrar configuración',
+        ];
+
+        foreach ($permissions as $permission) {
+            [$module, $action] = explode('.', $permission, 2);
+            $displayName = $specificNames[$permission]
+                ?? sprintf(
+                    '%s: %s',
+                    $moduleNames[$module] ?? ucfirst($module),
+                    $actionNames[$action] ?? ucfirst($action)
+                );
+
+            $permissionModel = Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'web',
+            ]);
+
+            $permissionModel->update([
+                'display_name' => $displayName,
             ]);
 
         }

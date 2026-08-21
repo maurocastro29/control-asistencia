@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* Scrollbar del sidebar */
 .sidebar-scroll::-webkit-scrollbar {
     width: 8px;

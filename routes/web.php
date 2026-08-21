@@ -13,6 +13,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleAdjustmentController;
 use App\Http\Controllers\WorkScheduleController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -34,13 +35,12 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware([
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware([
     'auth',
     'verified',
     'permission:dashboard.view'
-])->name('dashboard');
+    ])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -154,7 +154,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class)
             ->middleware('permission:users.view');
 
-    Route::resource('settings', SettingController::class);
+    Route::get('settings', [SettingController::class, 'index'])
+        ->name('settings.index');
+    Route::get('settings/roles/{role}/edit', [SettingController::class, 'editRole'])
+        ->name('settings.roles.edit');
+    Route::put('settings/roles/{role}', [SettingController::class, 'updateRole'])
+        ->name('settings.roles.update');
+    Route::patch('settings/roles/{role}/status', [SettingController::class, 'toggleRole'])
+        ->name('settings.roles.status');
+    Route::patch('settings/permissions/{permission}/status', [SettingController::class, 'togglePermission'])
+        ->name('settings.permissions.status');
 
     /*
     |--------------------------------------------------------------------------

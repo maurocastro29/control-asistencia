@@ -2,7 +2,7 @@
     <x-layout.page-header class="m-6" title="Detalle del festivo" subtitle="Consulta la información del día festivo.">
         <x-slot:actions>
             @can('holidays.edit')
-                <x-button.primary :href="route('holidays.edit')">
+                <x-button.primary :href="route('holidays.edit', $holiday->id)">
                     Editar
                 </x-button.primary>
             @endcan

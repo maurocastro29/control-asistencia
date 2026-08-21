@@ -12,8 +12,8 @@
         <x-table.table>
             <x-table.head>
                 <x-table.row>
-                    <x-table.th>Documento</x-table.th>
                     <x-table.th>Nombre Completo</x-table.th>
+                    <x-table.th>Documento</x-table.th>
                     <x-table.th>Departamento</x-table.th>
                     <x-table.th>Cargo</x-table.th>
                     <x-table.th>Horario</x-table.th>
@@ -25,11 +25,11 @@
                 @forelse($employees as $employee)
                     <x-table.row>
                         <x-table.td>
-                            {{ $employee->documentType->abbreviation }}
-                            {{ $employee->document_number }}
+                            {{ $employee->full_name }}
                         </x-table.td>
                         <x-table.td>
-                            {{ $employee->full_name }}
+                            {{ $employee->documentType->abbreviation }}
+                            {{ $employee->document_number }}
                         </x-table.td>
                         <x-table.td>
                             {{ $employee->department?->name }}
