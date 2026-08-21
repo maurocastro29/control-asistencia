@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\AttendanceRecord;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Position;
@@ -14,6 +13,7 @@ use App\Exports\AttendanceExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\WeeklyAttendanceService;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReportController extends Controller
 {
@@ -31,82 +31,111 @@ class ReportController extends Controller
     public function attendance(Request $request): View
     {
         $filters = [
-            'date_from' => $request->input('date_from'),
-            'date_to' => $request->input('date_to'),
+            'date_from' => $request->input(
+                'date_from',
+                now()->startOfMonth()->format('Y-m-d')
+            ),
+            'date_to' => $request->input(
+                'date_to',
+                now()->format('Y-m-d')
+            ),
             'employee_id' => $request->input('employee_id'),
             'department_id' => $request->input('department_id'),
             'position_id' => $request->input('position_id'),
         ];
 
+        $dateFrom = Carbon::parse($filters['date_from']);
+        $dateTo = Carbon::parse($filters['date_to']);
+
         /*
         |--------------------------------------------------------------------------
-        | Consulta principal
+        | Obtener empleados
         |--------------------------------------------------------------------------
         */
 
-        $query = AttendanceRecord::query()
+        $employees = Employee::query()
             ->with([
-                'employee.department',
-                'employee.position',
-                'employee.workSchedule',
+                'department',
+                'position',
+                'workSchedule.days.weekDay',
+                'attendanceRecords',
             ])
+            ->where('is_active', true)
 
-            ->when($filters['date_from'], function ($query, $date) {
-                $query->whereDate('work_date', '>=', $date);
-            })
+            ->when(
+                $filters['employee_id'],
+                fn ($query, $employeeId) =>
+                    $query->where('id', $employeeId)
+            )
 
-            ->when($filters['date_to'], function ($query, $date) {
-                $query->whereDate('work_date', '<=', $date);
-            })
+            ->when(
+                $filters['department_id'],
+                fn ($query, $departmentId) =>
+                    $query->where('department_id', $departmentId)
+            )
 
-            ->when($filters['employee_id'], function ($query, $employeeId) {
-                $query->where('employee_id', $employeeId);
-            })
+            ->when(
+                $filters['position_id'],
+                fn ($query, $positionId) =>
+                    $query->where('position_id', $positionId)
+            )
 
-            ->when($filters['department_id'], function ($query, $departmentId) {
-                $query->whereHas('employee', function ($query) use ($departmentId) {
-                    $query->where('department_id', $departmentId);
-                });
-            })
-
-            ->when($filters['position_id'], function ($query, $positionId) {
-                $query->whereHas('employee', function ($query) use ($positionId) {
-                    $query->where('position_id', $positionId);
-                });
-            });
+            ->orderBy('first_name')
+            ->orderBy('first_last_name')
+            ->get();
 
         /*
         |--------------------------------------------------------------------------
-        | Calcular resumen
+        | Construir jornadas
         |--------------------------------------------------------------------------
         */
 
-        $summaryRecords = (clone $query)->get();
+        $reportRecords = collect();
 
-        $totalWorkedMinutes = 0;
-        $totalOrdinaryMinutes = 0;
-        $totalOvertimeMinutes = 0;
+        foreach ($employees as $employee) {
 
-        foreach ($summaryRecords as $attendanceRecord) {
+            $records = $this->attendanceService->buildReportRecords(
+                $employee,
+                $dateFrom,
+                $dateTo
+            );
 
-            $calculation = $this->attendanceService
-                ->calculateAttendance($attendanceRecord);
-
-            $totalWorkedMinutes += $calculation['worked_minutes'];
-
-            $totalOrdinaryMinutes += $calculation['ordinary_minutes'];
-
-            $totalOvertimeMinutes += $calculation['overtime_minutes'];
+            foreach ($records as $record) {
+                $reportRecords->push($record);
+            }
         }
 
-        $employee = Employee::find(16);
+        /*
+        |--------------------------------------------------------------------------
+        | Resumen
+        |--------------------------------------------------------------------------
+        */
 
-        $weekly = $this->weeklyAttendanceService->calculate(
-            $employee,
-            Carbon::parse('2026-08-03')
+        $totalWorkedMinutes = $reportRecords->sum(
+            'worked_minutes'
         );
 
-        dd($weekly);
+        $totalOrdinaryMinutes = $reportRecords->sum(
+            'ordinary_minutes'
+        );
+
+        $totalOvertimeMinutes = $reportRecords->sum(
+            'overtime_minutes'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Horas adicionales
+        |--------------------------------------------------------------------------
+        */
+
+        $totalHedMinutes = $reportRecords->sum('hed_minutes');
+        $totalHenMinutes = $reportRecords->sum('hen_minutes');
+        $totalHefdMinutes = $reportRecords->sum('hefd_minutes');
+        $totalHefnMinutes = $reportRecords->sum('hefn_minutes');
+
+        $totalRnMinutes = $reportRecords->sum('rn_minutes');
+        $totalRnfMinutes = $reportRecords->sum('rnf_minutes');
 
         /*
         |--------------------------------------------------------------------------
@@ -125,45 +154,29 @@ class ReportController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Resultados paginados
+        | Paginar resultados
         |--------------------------------------------------------------------------
         */
 
-        $attendanceRecords = $query
-            ->orderByDesc('work_date')
-            ->orderBy('entry_time')
-            ->paginate(15)
-            ->withQueryString();
+        $page = $request->integer('page', 1);
+        $perPage = 15;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Calcular información de cada jornada para la tabla
-        |--------------------------------------------------------------------------
-        */
-
-        $attendanceRecords->getCollection()->transform(function ($attendanceRecord) {
-
-            $calculation = $this->attendanceService
-                ->calculateAttendance($attendanceRecord);
-
-            $attendanceRecord->worked_minutes = $calculation['worked_minutes'];
-            $attendanceRecord->ordinary_minutes = $calculation['ordinary_minutes'];
-            $attendanceRecord->overtime_minutes = $calculation['overtime_minutes'];
-
-            return $attendanceRecord;
-        });
+        $attendanceRecords = new \Illuminate\Pagination\LengthAwarePaginator(
+            $reportRecords->forPage($page, $perPage)->values(),
+            $reportRecords->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         /*
         |--------------------------------------------------------------------------
         | Opciones de filtros
         |--------------------------------------------------------------------------
         */
-
-        $employees = Employee::query()
-            ->where('is_active', true)
-            ->orderBy('first_name')
-            ->orderBy('first_last_name')
-            ->get();
 
         $departments = Department::query()
             ->where('is_active', true)
@@ -175,19 +188,28 @@ class ReportController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('reports.attendance', compact(
-            'attendanceRecords',
-            'employees',
-            'departments',
-            'positions',
-            'filters',
-            'totalWorkedMinutes',
-            'totalOrdinaryMinutes',
-            'totalOvertimeMinutes',
-            'workedTimeFormatted',
-            'ordinaryTimeFormatted',
-            'overtimeTimeFormatted'
-        ));
+        return view(
+            'reports.attendance',
+            compact(
+                'attendanceRecords',
+                'employees',
+                'departments',
+                'positions',
+                'filters',
+                'totalWorkedMinutes',
+                'totalOrdinaryMinutes',
+                'totalOvertimeMinutes',
+                'workedTimeFormatted',
+                'ordinaryTimeFormatted',
+                'overtimeTimeFormatted',
+                'totalHedMinutes',
+                'totalHenMinutes',
+                'totalHefdMinutes',
+                'totalHefnMinutes',
+                'totalRnMinutes',
+                'totalRnfMinutes',
+            )
+        );
     }
 
     /**

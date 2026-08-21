@@ -37,6 +37,13 @@ class StoreWorkScheduleRequest extends FormRequest
                 'max:255',
             ],
 
+            'weekly_minutes' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10080',
+            ],
+
             'is_active' => [
                 'required',
                 'boolean',

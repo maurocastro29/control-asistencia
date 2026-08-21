@@ -67,7 +67,7 @@ class UserController extends Controller
      */
     public function show(User $user): View
     {
-        $user->load('positions');
+        //$user->load('positions');
         $roles = Role::orderBy('name')->get();
 
         return view('users.show', compact('user', 'roles'));

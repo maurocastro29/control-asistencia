@@ -10,12 +10,14 @@ class WorkSchedule extends Model
     protected $fillable = [
         'name',
         'description',
+        'weekly_minutes',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
+            'weekly_minutes' => 'integer',
             'is_active' => 'boolean',
         ];
     }

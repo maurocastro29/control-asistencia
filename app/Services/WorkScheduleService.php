@@ -17,6 +17,7 @@ class WorkScheduleService
             $schedule = WorkSchedule::create([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
+                'weekly_minutes' => $data['weekly_minutes'],
                 'is_active' => $data['is_active'],
             ]);
 
@@ -46,6 +47,7 @@ class WorkScheduleService
             $schedule->update([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
+                'weekly_minutes' => $data['weekly_minutes'],
                 'is_active' => $data['is_active'],
             ]);
 
