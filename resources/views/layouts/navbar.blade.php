@@ -1,8 +1,6 @@
 <header class="bg-white shadow h-16 flex items-center justify-between px-8">
 
-    <h2 class="text-xl font-semibold">
-        Sistema de Control de Asistencia
-    </h2>
+    <x-brand-logo compact />
 
     <div class="flex items-center gap-4">
 

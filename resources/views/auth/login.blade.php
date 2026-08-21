@@ -7,13 +7,7 @@
             <div class="absolute -bottom-36 -left-24 h-80 w-80 rounded-full border-[36px] border-blue-500/20"></div>
 
             <div class="relative">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 font-black text-slate-950">
-                        CA</div>
-                    <span class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Control de
-                        asistencia</span>
-                </div>
+                <x-brand-logo light />
                 <h1 class="mt-12 max-w-md text-4xl font-bold leading-tight tracking-tight">Jornadas claras. Equipos
                     coordinados.</h1>
                 <p class="mt-4 max-w-md text-sm leading-6 text-slate-300">Gestiona la asistencia, los horarios y los
@@ -21,7 +15,7 @@
             </div>
 
             <div class="relative grid grid-cols-2 gap-3">
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
                     <p class="text-xl font-bold text-cyan-300">24/7</p>
                     <p class="mt-1 text-xs text-slate-400">Información disponible</p>
                 </div>
@@ -32,16 +26,11 @@
             </div>
         </section>
 
-        <section class="flex flex-col justify-center px-6 py-8 sm:px-12 lg:h-[calc(100dvh-2rem)] lg:max-h-[620px] lg:py-6">
+        <section
+            class="flex flex-col justify-center px-6 py-8 sm:px-12 lg:h-[calc(100dvh-2rem)] lg:max-h-[620px] lg:py-6">
             <div class="mx-auto w-full max-w-md">
                 <div class="mb-6 lg:hidden">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 font-black text-cyan-300">
-                            CA</div>
-                        <span class="text-sm font-bold uppercase tracking-[0.15em] text-slate-700">Control de
-                            asistencia</span>
-                    </div>
+                    <x-brand-logo compact />
                 </div>
                 <div class="mb-6">
                     <p class="text-sm font-semibold uppercase tracking-widest text-cyan-600">Acceso seguro</p>

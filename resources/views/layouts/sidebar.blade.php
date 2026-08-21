@@ -1,10 +1,5 @@
 <aside
     class="sidebar-scroll sticky top-16 h-[calc(100vh-4rem)] w-64 flex-shrink-0 overflow-y-auto bg-blue-600 text-white">
-    <div class="border-b border-blue-500/60 px-5 py-5">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200">Navegación</p>
-        <h2 class="mt-1 text-xl font-bold">Menú principal</h2>
-    </div>
-
     <nav class="space-y-2 px-3 py-4 pb-8">
         @can('dashboard.view')
             <a href="{{ route('dashboard') }}"
@@ -15,7 +10,6 @@
                 Dashboard
             </a>
         @endcan
-
         @canany(['employees.view', 'users.view'])
             <div x-data="{ open: {{ request()->routeIs('employees.*', 'users.*') ? 'true' : 'false' }} }" class="pt-3">
                 <button type="button" @click="open = !open" :aria-expanded="open.toString()"

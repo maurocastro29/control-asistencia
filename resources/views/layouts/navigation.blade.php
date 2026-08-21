@@ -4,7 +4,7 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="hidden items-center font-bold text-white sm:-my-px sm:flex">
-                    <p>Bienvenido al Control de asistencia</p>
+                    <x-brand-logo light />
                 </div>
             </div>
             <!-- Settings Dropdown -->
