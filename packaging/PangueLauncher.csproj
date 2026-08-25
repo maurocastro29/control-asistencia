@@ -12,4 +12,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="PangueSetup.cs" />
+  </ItemGroup>
 </Project>
