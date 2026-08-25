@@ -23,3 +23,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/dist
+/packaging/bin/
+/packaging/obj/
+/packaging/.launcher-test/
+/packaging/.launcher-publish/
+/packaging/.setup-publish/
