@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDirectory = "dist\Pangue",
+    [string]$OutputDirectory = "dist\Pangea",
     [switch]$SeedDatabase
 )
 
@@ -13,7 +13,7 @@ $phpExecutable = (Get-Command php -ErrorAction Stop).Source
 $phpSourcePath = Split-Path $phpExecutable -Parent
 $composer = (Get-Command composer -ErrorAction Stop).Source
 
-Write-Host "Preparando paquete Pangue en $outputPath"
+Write-Host "Preparando paquete Pangea en $outputPath"
 
 if (Test-Path $outputPath) {
     Remove-Item $outputPath -Recurse -Force
@@ -113,25 +113,25 @@ finally {
     Pop-Location
 }
 
-Write-Host "Publicando Pangue.exe"
+Write-Host "Publicando Pangea.exe"
 if (Test-Path $launcherPublishPath) {
     Remove-Item $launcherPublishPath -Recurse -Force
 }
 New-Item $launcherPublishPath -ItemType Directory -Force | Out-Null
-& dotnet publish (Join-Path $projectRoot "packaging\PangueLauncher.csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $launcherPublishPath
+& dotnet publish (Join-Path $projectRoot "packaging\PangeaLauncher.csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $launcherPublishPath
 if ($LASTEXITCODE -ne 0) {
-    throw "No fue posible compilar Pangue.exe."
+    throw "No fue posible compilar Pangea.exe."
 }
-Copy-Item (Join-Path $launcherPublishPath "Pangue.exe") (Join-Path $appPath "Pangue.exe") -Force
+Copy-Item (Join-Path $launcherPublishPath "Pangea.exe") (Join-Path $appPath "Pangea.exe") -Force
 
 $readme = @"
-PANGUE - CONTROL DE ASISTENCIA
+PANGEA - CONTROL DE ASISTENCIA
 
 Uso:
 1. Copia toda esta carpeta en el equipo Windows.
-2. Ejecuta Pangue.exe.
+2. Ejecuta Pangea.exe.
 3. Se abrirá automáticamente en el navegador.
-4. Para cerrar Pangue, usa el icono de la bandeja del sistema y selecciona Cerrar.
+4. Para cerrar Pangea, usa el icono de la bandeja del sistema y selecciona Cerrar.
 
 La base de datos local se encuentra en database\database.sqlite.
 No elimines la carpeta php, vendor, storage ni database.

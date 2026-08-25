@@ -7,13 +7,13 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <AssemblyName>Pangue-Setup</AssemblyName>
-    <RootNamespace>PangueSetup</RootNamespace>
+    <AssemblyName>Pangea-Setup</AssemblyName>
+    <RootNamespace>PangeaSetup</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="PangueLauncher.cs" />
-    <EmbeddedResource Include="PanguePayload.zip" LogicalName="PanguePayload.zip" />
+    <Compile Remove="PangeaLauncher.cs" />
+    <EmbeddedResource Include="PangeaPayload.zip" LogicalName="PangeaPayload.zip" />
   </ItemGroup>
 </Project>

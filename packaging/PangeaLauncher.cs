@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Windows.Forms;
 
-const string appName = "Pangue";
+const string appName = "Pangea";
 var appDirectory = AppContext.BaseDirectory;
 var phpPath = Path.Combine(appDirectory, "php", "php.exe");
 var artisanPath = Path.Combine(appDirectory, "artisan");
@@ -11,7 +11,7 @@ var artisanPath = Path.Combine(appDirectory, "artisan");
 if (!File.Exists(phpPath) || !File.Exists(artisanPath))
 {
     System.Windows.Forms.MessageBox.Show(
-        "No se encontró la instalación de Pangue. Reinstala la aplicación o contacta al administrador.",
+        "No se encontró la instalación de Pangea. Reinstala la aplicación o contacta al administrador.",
         appName,
         MessageBoxButtons.OK,
         MessageBoxIcon.Error);
@@ -126,7 +126,7 @@ internal sealed class TrayContext : ApplicationContext
             Visible = true,
             ContextMenuStrip = new ContextMenuStrip(),
         };
-        trayIcon.ContextMenuStrip.Items.Add("Abrir Pangue", null, (_, _) => OpenApplication());
+        trayIcon.ContextMenuStrip.Items.Add("Abrir Pangea", null, (_, _) => OpenApplication());
         trayIcon.ContextMenuStrip.Items.Add("Cerrar", null, (_, _) => ExitThread());
         trayIcon.DoubleClick += (_, _) => OpenApplication();
     }

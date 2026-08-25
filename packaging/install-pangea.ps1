@@ -2,11 +2,11 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $ErrorActionPreference = "Stop"
-$payloadArchive = Join-Path $PSScriptRoot "PanguePayload.zip"
-$defaultPath = Join-Path $env:LOCALAPPDATA "Pangue"
+$payloadArchive = Join-Path $PSScriptRoot "PangeaPayload.zip"
+$defaultPath = Join-Path $env:LOCALAPPDATA "Pangea"
 
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = "Selecciona dónde instalar Pangue"
+$dialog.Description = "Selecciona dónde instalar Pangea"
 $dialog.SelectedPath = $defaultPath
 $dialog.ShowNewFolderButton = $true
 
@@ -15,7 +15,7 @@ if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
 }
 
 $installPath = $dialog.SelectedPath
-$tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("PangueSetup-" + [guid]::NewGuid().ToString("N"))
+$tempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("PangeaSetup-" + [guid]::NewGuid().ToString("N"))
 $payloadPath = Join-Path $tempPath "payload"
 
 try {
@@ -31,28 +31,28 @@ try {
     New-Item $installPath -ItemType Directory -Force | Out-Null
     Copy-Item (Join-Path $payloadPath "*") $installPath -Recurse -Force
 
-    $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Pangue.lnk"
+    $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Pangea.lnk"
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = Join-Path $installPath "Pangue.exe"
+    $shortcut.TargetPath = Join-Path $installPath "Pangea.exe"
     $shortcut.WorkingDirectory = $installPath
-    $shortcut.Description = "Pangue - Control de asistencia"
-    $shortcut.IconLocation = Join-Path $installPath "Pangue.exe"
+    $shortcut.Description = "Pangea - Control de asistencia"
+    $shortcut.IconLocation = Join-Path $installPath "Pangea.exe"
     $shortcut.Save()
 
     [System.Windows.Forms.MessageBox]::Show(
-        "Pangue se instaló correctamente en:`n`n$installPath`n`nSe creó un acceso directo en el escritorio.",
-        "Pangue",
+        "Pangea se instaló correctamente en:`n`n$installPath`n`nSe creó un acceso directo en el escritorio.",
+        "Pangea",
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Information
     )
 
-    Start-Process (Join-Path $installPath "Pangue.exe")
+    Start-Process (Join-Path $installPath "Pangea.exe")
 }
 catch {
     [System.Windows.Forms.MessageBox]::Show(
-        "No fue posible instalar Pangue:`n`n$($_.Exception.Message)",
-        "Pangue",
+        "No fue posible instalar Pangea:`n`n$($_.Exception.Message)",
+        "Pangea",
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error
     )

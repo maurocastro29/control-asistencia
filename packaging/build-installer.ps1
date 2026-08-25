@@ -1,13 +1,13 @@
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\")).Path
-$portablePath = Join-Path $projectRoot "dist\Pangue"
+$portablePath = Join-Path $projectRoot "dist\Pangea"
 $packagingPath = Join-Path $projectRoot "packaging"
-$payloadPath = Join-Path $packagingPath "PanguePayload.zip"
-$installerPath = Join-Path $projectRoot "dist\Pangue-Setup.exe"
+$payloadPath = Join-Path $packagingPath "PangeaPayload.zip"
+$installerPath = Join-Path $projectRoot "dist\Pangea-Setup.exe"
 $publishPath = Join-Path $packagingPath ".setup-publish"
 
-if (-not (Test-Path (Join-Path $portablePath "Pangue.exe"))) {
-    throw "No existe dist\Pangue. Ejecuta primero build-portable.ps1."
+if (-not (Test-Path (Join-Path $portablePath "Pangea.exe"))) {
+    throw "No existe dist\Pangea. Ejecuta primero build-portable.ps1."
 }
 
 if (Test-Path $payloadPath) {
@@ -23,11 +23,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Compilando el instalador autocontenido"
-& dotnet publish (Join-Path $packagingPath "PangueSetup.csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $publishPath
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $publishPath "Pangue-Setup.exe"))) {
-    throw "No fue posible compilar Pangue-Setup.exe."
+& dotnet publish (Join-Path $packagingPath "PangeaSetup.csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $publishPath
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $publishPath "Pangea-Setup.exe"))) {
+    throw "No fue posible compilar Pangea-Setup.exe."
 }
-Copy-Item (Join-Path $publishPath "Pangue-Setup.exe") $installerPath -Force
+Copy-Item (Join-Path $publishPath "Pangea-Setup.exe") $installerPath -Force
 
 Remove-Item $payloadPath -Force
 Remove-Item $publishPath -Recurse -Force
