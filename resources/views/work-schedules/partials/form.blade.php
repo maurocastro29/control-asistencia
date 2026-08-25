@@ -2,8 +2,10 @@
     {{-- Información general --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <x-form.input name="name" label="Nombre" :value="old('name', $workSchedule->name ?? '')" required />
-        <x-form.input name="weekly_minutes" label="Horas semanales (minutos)" type="number" min="1" max="10080"
-            :value="old('weekly_minutes', $workSchedule->weekly_minutes ?? 2520)" required />
+        <x-form.input name="weekly_hours" label="Horas semanales" type="number" min="0.01" max="168" step="0.01"
+            :value="old('weekly_hours', number_format(($workSchedule->weekly_minutes ?? 2520) / 60, 2, '.', ''))" required />
+        <input type="hidden" name="weekly_minutes" id="weekly_minutes"
+            value="{{ old('weekly_minutes', $workSchedule->weekly_minutes ?? 2520) }}">
         <x-form.switch name="is_active" label="Horario activo" :checked="old('is_active', $workSchedule->is_active ?? true)" />
     </div>
     {{-- Descripción --}}
@@ -84,6 +86,18 @@
                         </x-table.td>
                     </x-table.row>
                 @endforeach
+                <x-table.row>
+                    <x-table.td class="col-span-5">
+                        <span>Total horas semana</span>
+                    </x-table.td>
+                    <x-table.td></x-table.td>
+                    <x-table.td></x-table.td>
+                    <x-table.td></x-table.td>
+                    <x-table.td></x-table.td>
+                    <x-table.td>
+                        <span id="weekly-calculated-hours" class="font-semibold text-slate-800">0.00 h</span>
+                    </x-table.td>
+                </x-table.row>
             </x-table.body>
         </x-table.table>
     </div>
@@ -92,6 +106,44 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const weeklyHours = document.getElementById('weekly_hours');
+        const weeklyMinutes = document.getElementById('weekly_minutes');
+
+        function getWorkingMinutes() {
+            return [...document.querySelectorAll('[id^="ordinary_minutes_"]')]
+                .reduce((total, field) => {
+                    const index = field.id.replace('ordinary_minutes_', '');
+                    const workingDay = document.querySelector(
+                        `input[name="days[${index}][is_working_day]"]:checked`
+                    );
+                    return total + (workingDay ? (parseInt(field.value, 10) || 0) : 0);
+                }, 0);
+        }
+
+        function updateWeeklyTotal() {
+            const weeklyTotal = document.getElementById('weekly-calculated-hours');
+            if (weeklyTotal) {
+                weeklyTotal.textContent = `${(getWorkingMinutes() / 60).toFixed(2)} h`;
+            }
+        }
+
+        function syncWeeklyMinutes() {
+            const hours = parseFloat(weeklyHours.value) || 0;
+            weeklyMinutes.value = Math.round(hours * 60);
+        }
+
+        function validateWeeklyHours() {
+            syncWeeklyMinutes();
+            const declaredMinutes = parseInt(weeklyMinutes.value, 10) || 0;
+            const calculatedMinutes = getWorkingMinutes();
+            updateWeeklyTotal();
+            weeklyHours.setCustomValidity(
+                declaredMinutes === calculatedMinutes ?
+                '' :
+                `Las horas semanales deben coincidir con la suma de los días laborales (${(calculatedMinutes / 60).toFixed(2)} horas).`
+            );
+        }
+
         function calculateOrdinaryMinutes(index) {
             const entry = document.getElementById(`entry_time_${index}`);
             const exit = document.getElementById(`exit_time_${index}`);
@@ -104,6 +156,7 @@
             if (!entry.value || !exit.value) {
                 ordinaryMinutes.value = 0;
                 ordinaryHours.value = '0.0';
+                validateWeeklyHours();
                 return;
             }
             const [entryHour, entryMinute] = entry.value.split(':').map(Number);
@@ -126,7 +179,16 @@
             // Mostramos horas solamente.
             const hours = workedMinutes / 60;
             ordinaryHours.value = hours.toFixed(1);
+            validateWeeklyHours();
         }
+        weeklyHours?.addEventListener('input', validateWeeklyHours);
+        weeklyHours?.form?.addEventListener('submit', function(event) {
+            validateWeeklyHours();
+            if (!weeklyHours.checkValidity()) {
+                event.preventDefault();
+                weeklyHours.reportValidity();
+            }
+        });
         @foreach ($weekDays as $index => $weekDay)
             const entry{{ $index }} = document.getElementById('entry_time_{{ $index }}');
             const exit{{ $index }} = document.getElementById('exit_time_{{ $index }}');
@@ -140,8 +202,13 @@
             lunch{{ $index }}?.addEventListener('input', function() {
                 calculateOrdinaryMinutes({{ $index }});
             });
+            document.querySelectorAll('input[name="days[{{ $index }}][is_working_day]"]').forEach(
+                function(input) {
+                    input.addEventListener('change', validateWeeklyHours);
+                });
             // Calculamos también al cargar la página.
             calculateOrdinaryMinutes({{ $index }});
         @endforeach
+        validateWeeklyHours();
     });
 </script>

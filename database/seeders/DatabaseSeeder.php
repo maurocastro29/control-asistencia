@@ -23,9 +23,7 @@ class DatabaseSeeder extends Seeder
             DocumentTypeSeeder::class,
             DepartmentSeeder::class,
             PositionSeeder::class,
-            EmployeeSeeder::class,
             WeekDaySeeder::class,
-            AttendanceRecordSeeder::class,
         ]);
     }
 }

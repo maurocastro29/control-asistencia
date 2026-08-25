@@ -30,6 +30,9 @@
                 </div>
             </div>
             <x-layout.card>
+                <p class="mb-4 text-lg font-semibold text-slate-800">
+                    Tiempo de trabajo semanal: {{ number_format($workSchedule->weekly_minutes / 60, 2) }} horas
+                </p>
                 <x-table.table>
                     <x-table.head>
                         <x-table.row>

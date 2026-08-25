@@ -136,6 +136,10 @@ class WorkScheduleService
 
         $minutes = intval(($exit - $entry) / 60);
 
+        if ($minutes < 0) {
+            $minutes += 24 * 60;
+        }
+
         $minutes -= intval($day['lunch_minutes'] ?? 0);
 
         return max($minutes, 0);

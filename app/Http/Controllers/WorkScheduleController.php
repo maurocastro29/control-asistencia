@@ -18,16 +18,12 @@ class WorkScheduleController extends Controller
     public function __construct(WorkScheduleService $workScheduleService)
     {
         $this->workScheduleService = $workScheduleService;
-
         $this->middleware('permission:work-schedules.view')
             ->only(['index', 'show']);
-
         $this->middleware('permission:work-schedules.create')
             ->only(['create', 'store']);
-
         $this->middleware('permission:work-schedules.edit')
             ->only(['edit', 'update']);
-
         $this->middleware('permission:work-schedules.delete')
             ->only('destroy');
     }
@@ -53,7 +49,6 @@ class WorkScheduleController extends Controller
     public function create(): View
     {
         $weekDays = WeekDay::orderBy('order')->get();
-
         return view('work-schedules.create', compact('weekDays'));
     }
 

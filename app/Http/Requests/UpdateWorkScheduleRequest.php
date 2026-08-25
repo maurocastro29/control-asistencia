@@ -8,6 +8,15 @@ use Illuminate\Validation\Rule;
 
 class UpdateWorkScheduleRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('weekly_hours') && is_numeric($this->input('weekly_hours'))) {
+            $this->merge([
+                'weekly_minutes' => (int) round((float) $this->input('weekly_hours') * 60),
+            ]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,6 +46,13 @@ class UpdateWorkScheduleRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
+            ],
+
+            'weekly_hours' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                'max:168',
             ],
 
             'weekly_minutes' => [
@@ -90,5 +106,38 @@ class UpdateWorkScheduleRequest extends FormRequest
             ],
 
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $days = $this->input('days', []);
+            if (!is_array($days) || !$this->filled('weekly_minutes')) {
+                return;
+            }
+
+            $calculatedMinutes = collect($days)->sum(function (array $day): int {
+                if (!(bool) ($day['is_working_day'] ?? false)
+                    || empty($day['entry_time'])
+                    || empty($day['exit_time'])) {
+                    return 0;
+                }
+
+                $entry = strtotime($day['entry_time']);
+                $exit = strtotime($day['exit_time']);
+                if ($exit < $entry) {
+                    $exit += 24 * 60 * 60;
+                }
+
+                return max(0, (int) (($exit - $entry) / 60) - (int) ($day['lunch_minutes'] ?? 0));
+            });
+
+            if ((int) $this->input('weekly_minutes') !== $calculatedMinutes) {
+                $validator->errors()->add(
+                    'weekly_hours',
+                    'Las horas semanales deben coincidir con la suma de los días laborales.'
+                );
+            }
+        });
     }
 }

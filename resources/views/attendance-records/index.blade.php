@@ -9,12 +9,38 @@
         </x-slot:actions>
     </x-layout.page-header>
     <x-layout.card>
-        @if ($lastWorkDate)
+        <form action="{{ route('attendance-records.index') }}" method="GET" class="mb-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+                <x-form.input type="date" name="date_from" label="Fecha desde" :value="$filters['date_from'] ?? ''" />
+                <x-form.input type="date" name="date_to" label="Fecha hasta" :value="$filters['date_to'] ?? ''" />
+                <x-form.select name="employee_id" label="Empleado" :options="$employees" optionLabel="full_name"
+                    optionValue="id" :selected="$filters['employee_id'] ?? ''" />
+                <x-form.select name="department_id" label="Departamento" :options="$departments" optionLabel="name"
+                    optionValue="id" :selected="$filters['department_id'] ?? ''" />
+                <x-form.select name="position_id" label="Cargo" :options="$positions" optionLabel="name" optionValue="id"
+                    :selected="$filters['position_id'] ?? ''" />
+            </div>
+            <div class="mt-4 flex justify-end gap-3">
+                <x-button.secondary :href="route('attendance-records.index')">
+                    Limpiar
+                </x-button.secondary>
+                <x-button.primary type="submit">
+                    Filtrar
+                </x-button.primary>
+            </div>
+        </form>
+        @if (!$hasFilters && $lastWorkDate)
             <div class="py-2">
                 <p class="text-sm text-slate-700 mt-1">
                     Mostrando jornadas del {{ \Carbon\Carbon::parse($lastWorkDate)->format('d/m/Y') }} <span
                         class="text-slate-500"> (Última fecha que
                         registra asistencia)</span>
+                </p>
+            </div>
+        @elseif ($hasFilters)
+            <div class="py-2">
+                <p class="text-sm text-slate-700 mt-1">
+                    Resultados según los filtros seleccionados.
                 </p>
             </div>
         @endif

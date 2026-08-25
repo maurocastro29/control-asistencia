@@ -8,6 +8,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Services\AttendanceService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Routing\Controller;
@@ -34,24 +35,56 @@ class AttendanceRecordController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
-{
-    $lastWorkDate = AttendanceRecord::query()
-        ->orderByDesc('work_date')
-        ->value('work_date');
+    public function index(Request $request): View
+    {
+        $filters = $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'position_id' => ['nullable', 'integer', 'exists:positions,id'],
+        ]);
 
-    $attendanceRecords = AttendanceRecord::with('employee')
-        ->when($lastWorkDate, function ($query) use ($lastWorkDate) {
-            $query->whereDate('work_date', $lastWorkDate);
-        })
-        ->orderBy('entry_time')
-        ->paginate(15);
+        $lastWorkDate = AttendanceRecord::query()
+            ->orderByDesc('work_date')
+            ->value('work_date');
 
-    return view('attendance-records.index', compact(
-        'attendanceRecords',
-        'lastWorkDate'
-    ));
-}
+        $hasFilters = collect($filters)->filter(fn ($value) => filled($value))->isNotEmpty();
+
+        $attendanceRecords = AttendanceRecord::with('employee')
+            ->when(!$hasFilters && $lastWorkDate, function ($query) use ($lastWorkDate) {
+                $query->whereDate('work_date', $lastWorkDate);
+            })
+            ->when($filters['date_from'] ?? null, fn ($query, $date) =>
+                $query->whereDate('work_date', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($query, $date) =>
+                $query->whereDate('work_date', '<=', $date))
+            ->when($filters['employee_id'] ?? null, fn ($query, $employeeId) =>
+                $query->where('employee_id', $employeeId))
+            ->when($filters['department_id'] ?? null, fn ($query, $departmentId) =>
+                $query->whereHas('employee', fn ($employeeQuery) =>
+                    $employeeQuery->where('department_id', $departmentId)))
+            ->when($filters['position_id'] ?? null, fn ($query, $positionId) =>
+                $query->whereHas('employee', fn ($employeeQuery) =>
+                    $employeeQuery->where('position_id', $positionId)))
+            ->orderByDesc('work_date')
+            ->orderBy('entry_time')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('attendance-records.index', [
+            'attendanceRecords' => $attendanceRecords,
+            'lastWorkDate' => $lastWorkDate,
+            'filters' => $filters,
+            'employees' => Employee::query()
+                ->orderBy('first_name')
+                ->orderBy('first_last_name')
+                ->get(),
+            'departments' => \App\Models\Department::orderBy('name')->get(),
+            'positions' => \App\Models\Position::orderBy('name')->get(),
+            'hasFilters' => $hasFilters,
+        ]);
+    }
 
     /**
      * Show the form for creating a new resource.
