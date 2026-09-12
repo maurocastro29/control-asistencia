@@ -10,11 +10,6 @@
         </x-slot:actions>
     </x-layout.page-header>
     <x-layout.card>
-        @if (session('success'))
-            <div class="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-                {{ session('success') }}
-            </div>
-        @endif
         <x-table.table>
             <x-table.head>
                 <x-table.row>
@@ -77,7 +72,10 @@
                             @can('work-schedules-adjustments.complete')
                                 @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'cancelled')
                                     <form action="{{ route('work-schedule-adjustments.complete', $adjustment) }}"
-                                        method="POST" onsubmit="return confirm('¿Deseas aprobar este ajuste de jornada?')">
+                                        method="POST"
+                                        data-confirm="¿Deseas aprobar este ajuste de jornada?"
+                                        data-confirm-title="Completar ajuste"
+                                        data-confirm-button="Sí, completar">
                                         @csrf
                                         <button type="submit"
                                             class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none">
@@ -90,7 +88,9 @@
                                 @if ($adjustment->is_active && $adjustment->status === 'pending' && $adjustment->status !== 'completed')
                                     <form action="{{ route('work-schedule-adjustments.canceled', $adjustment) }}"
                                         method="POST"
-                                        onsubmit="return confirm('¿Deseas cancelar este ajuste de jornada?')">
+                                        data-confirm="¿Deseas cancelar este ajuste de jornada?"
+                                        data-confirm-title="Cancelar ajuste"
+                                        data-confirm-button="Sí, cancelar">
                                         @csrf
                                         <button type="submit"
                                             class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 focus:outline-none">

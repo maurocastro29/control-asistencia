@@ -12,8 +12,16 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
-        Employee::factory()
-            ->count(20)
-            ->create();
+        for ($index = 1; $index <= 20; $index++) {
+            $documentNumber = '900000' . str_pad((string) $index, 4, '0', STR_PAD_LEFT);
+            $employee = Employee::factory()->make([
+                'document_number' => $documentNumber,
+            ]);
+
+            Employee::firstOrCreate(
+                ['document_number' => $documentNumber],
+                $employee->getAttributes()
+            );
+        }
     }
 }

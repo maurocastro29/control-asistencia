@@ -13,7 +13,7 @@ class PositionSeeder extends Seeder
      */
     public function run(): void
     {
-        Position::insert([
+        $positions = [
 
             [
                 'name' => 'Gerente',
@@ -45,6 +45,13 @@ class PositionSeeder extends Seeder
                 'is_active' => true,
             ],
 
-        ]);
+        ];
+
+        foreach ($positions as $position) {
+            Position::firstOrCreate(
+                ['name' => $position['name']],
+                $position
+            );
+        }
     }
 }

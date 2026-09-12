@@ -68,7 +68,10 @@ class WeekDaySeeder extends Seeder
 
         foreach ($days as $day) {
 
-            WeekDay::create($day);
+            WeekDay::firstOrCreate(
+                ['code' => $day['code']],
+                $day
+            );
 
         }
     }

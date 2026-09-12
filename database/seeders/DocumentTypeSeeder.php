@@ -13,7 +13,7 @@ class DocumentTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        DocumentType::insert([
+        $documentTypes = [
             [
                 'name' => 'Cédula de Ciudadanía',
                 'abbreviation' => 'CC',
@@ -54,6 +54,13 @@ class DocumentTypeSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($documentTypes as $documentType) {
+            DocumentType::firstOrCreate(
+                ['abbreviation' => $documentType['abbreviation']],
+                $documentType
+            );
+        }
     }
 }

@@ -66,7 +66,9 @@
                                 @can('holidays.delete')
                                     @if ($holiday->is_active)
                                         <form action="{{ route('holidays.destroy', $holiday) }}" method="POST"
-                                            onsubmit="return confirm('¿Deseas desactivar este festivo?')">
+                                            data-confirm="¿Deseas desactivar este festivo?"
+                                            data-confirm-title="Desactivar festivo"
+                                            data-confirm-button="Sí, desactivar">
                                             @csrf
                                             @method('DELETE')
                                             <x-button.primary class="bg-red-500 hover:bg-red-600" type="submit">

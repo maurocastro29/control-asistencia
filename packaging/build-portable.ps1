@@ -1,142 +1,76 @@
 param(
-    [string]$OutputDirectory = "dist\Pangea",
-    [switch]$SeedDatabase
+    [string]$OutputDirectory = "dist\Pangea"
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\")).Path
 $outputPath = Join-Path $projectRoot $OutputDirectory
-$appPath = $outputPath
-$phpPath = Join-Path $appPath "php"
-$launcherPublishPath = Join-Path $projectRoot "packaging\.launcher-publish"
-$phpExecutable = (Get-Command php -ErrorAction Stop).Source
-$phpSourcePath = Split-Path $phpExecutable -Parent
-$composer = (Get-Command composer -ErrorAction Stop).Source
+$electronRoot = Join-Path $projectRoot "nativephp\electron"
+$electronBuildPath = Join-Path $electronRoot "dist\win-unpacked"
+$nativeBuildAppPath = Join-Path $projectRoot "vendor\nativephp\desktop\resources\build\app"
 
-Write-Host "Preparando paquete Pangea en $outputPath"
-
-if (Test-Path $outputPath) {
-    Remove-Item $outputPath -Recurse -Force
-}
-New-Item $appPath -ItemType Directory -Force | Out-Null
-
-$excludeDirectories = @(
-    ".git",
-    ".github",
-    ".idea",
-    ".vscode",
-    "node_modules",
-    "vendor",
-    "storage\framework\cache",
-    "storage\framework\sessions",
-    "storage\framework\testing",
-    "storage\framework\views",
-    "storage\logs",
-    "tests",
-    "packaging",
-    "dist"
-)
-
-$robocopyArgs = @($projectRoot, $appPath, "/E", "/COPY:DAT", "/DCOPY:DAT", "/R:1", "/W:1", "/NFL", "/NDL", "/NJH", "/NJS")
-foreach ($directory in $excludeDirectories) {
-    $robocopyArgs += "/XD"
-    $robocopyArgs += (Join-Path $projectRoot $directory)
-}
-$robocopyArgs += "/XF"
-$robocopyArgs += (Join-Path $projectRoot ".env")
-& robocopy @robocopyArgs | Out-Null
-if ($LASTEXITCODE -gt 7) {
-    throw "No fue posible copiar los archivos de la aplicación. Código Robocopy: $LASTEXITCODE"
-}
-
-New-Item (Join-Path $appPath "storage\framework\cache") -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $appPath "storage\framework\sessions") -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $appPath "storage\framework\views") -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $appPath "storage\logs") -ItemType Directory -Force | Out-Null
-New-Item (Join-Path $appPath "bootstrap\cache") -ItemType Directory -Force | Out-Null
-
-$envTemplate = Get-Content (Join-Path $projectRoot ".env.example") -Raw
-$envTemplate = $envTemplate -replace "APP_ENV=local", "APP_ENV=production"
-$envTemplate = $envTemplate -replace "APP_DEBUG=true", "APP_DEBUG=false"
-$envTemplate = $envTemplate -replace "APP_URL=http://localhost", "APP_URL=http://127.0.0.1"
-$envTemplate = $envTemplate -replace "APP_KEY=", "APP_KEY="
-$envTemplate = $envTemplate -replace "DB_DATABASE=laravel", "DB_DATABASE=database/database.sqlite"
-Set-Content (Join-Path $appPath ".env") $envTemplate -Encoding UTF8
-
-Write-Host "Copiando PHP y extensiones SQLite"
-New-Item $phpPath -ItemType Directory -Force | Out-Null
-$phpCopyArgs = @($phpSourcePath, $phpPath, "/E", "/COPY:DAT", "/DCOPY:DAT", "/R:1", "/W:1", "/NFL", "/NDL", "/NJH", "/NJS")
-& robocopy @phpCopyArgs | Out-Null
-if ($LASTEXITCODE -gt 7) {
-    throw "No fue posible copiar PHP. Código Robocopy: $LASTEXITCODE"
-}
-
-$phpIni = Join-Path $phpPath "php.ini"
-if (Test-Path (Join-Path $phpPath "php.ini-production")) {
-    Copy-Item (Join-Path $phpPath "php.ini-production") $phpIni -Force
-}
-
-$phpIniContent = Get-Content $phpIni -Raw
-$phpIniContent = $phpIniContent -replace ';extension_dir = "ext"', 'extension_dir = "ext"'
-$phpIniContent = $phpIniContent -replace ';extension=pdo_sqlite', 'extension=pdo_sqlite'
-$phpIniContent = $phpIniContent -replace ';extension=sqlite3', 'extension=sqlite3'
-$phpIniContent = $phpIniContent -replace ';extension=mbstring', 'extension=mbstring'
-$phpIniContent = $phpIniContent -replace ';extension=fileinfo', 'extension=fileinfo'
-$phpIniContent = $phpIniContent -replace ';extension=openssl', 'extension=openssl'
-$phpIniContent = $phpIniContent -replace ';extension=zip', 'extension=zip'
-Set-Content $phpIni $phpIniContent -Encoding ASCII
-
-Push-Location $appPath
+Write-Host "Construyendo Pangea con NativePHP Desktop"
+Push-Location $projectRoot
 try {
-    Write-Host "Instalando dependencias de producción"
-    & $composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+    php artisan optimize:clear
     if ($LASTEXITCODE -ne 0) {
-        throw "Composer no pudo instalar las dependencias de producción."
+        throw "No fue posible limpiar la configuración de Laravel."
     }
 
-    & (Join-Path $phpPath "php.exe") artisan key:generate --force
-    & (Join-Path $phpPath "php.exe") artisan config:cache
-    & (Join-Path $phpPath "php.exe") artisan route:cache
-    & (Join-Path $phpPath "php.exe") artisan view:cache
-
-    $databasePath = Join-Path $appPath "database\database.sqlite"
-    if (-not (Test-Path $databasePath)) {
-        New-Item $databasePath -ItemType File -Force | Out-Null
+    if (Test-Path $nativeBuildAppPath) {
+        $cleanupPath = Join-Path $env:TEMP ("pangea-native-build-cleanup-" + [guid]::NewGuid().ToString("N"))
+        New-Item $cleanupPath -ItemType Directory -Force | Out-Null
+        & robocopy.exe $cleanupPath $nativeBuildAppPath /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS /NP
+        if ($LASTEXITCODE -gt 7) {
+            throw "No fue posible limpiar el recurso temporal de NativePHP. Robocopy devolvió el código $LASTEXITCODE."
+        }
+        Remove-Item $nativeBuildAppPath -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item $cleanupPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    & (Join-Path $phpPath "php.exe") artisan migrate --force
-    if ($SeedDatabase) {
-        & (Join-Path $phpPath "php.exe") artisan db:seed --force
+    php artisan native:build win x64
+    if ($LASTEXITCODE -ne 0) {
+        throw "NativePHP no pudo construir la aplicación Electron."
     }
 }
 finally {
     Pop-Location
 }
 
-Write-Host "Publicando Pangea.exe"
-if (Test-Path $launcherPublishPath) {
-    Remove-Item $launcherPublishPath -Recurse -Force
+if (-not (Test-Path (Join-Path $electronBuildPath "pangea.exe"))) {
+    throw "No se encontró el ejecutable Electron en $electronBuildPath."
 }
-New-Item $launcherPublishPath -ItemType Directory -Force | Out-Null
-& dotnet publish (Join-Path $projectRoot "packaging\PangeaLauncher.csproj") -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $launcherPublishPath
-if ($LASTEXITCODE -ne 0) {
-    throw "No fue posible compilar Pangea.exe."
+
+Get-ChildItem (Join-Path $projectRoot "dist") -Filter "Pangea-*-setup.exe" -File -ErrorAction SilentlyContinue |
+    Remove-Item -Force
+Get-ChildItem (Join-Path $projectRoot "dist") -Filter "Pangea-*-setup.exe.blockmap" -File -ErrorAction SilentlyContinue |
+    Remove-Item -Force
+
+if (Test-Path $outputPath) {
+    Remove-Item $outputPath -Recurse -Force
 }
-Copy-Item (Join-Path $launcherPublishPath "Pangea.exe") (Join-Path $appPath "Pangea.exe") -Force
+
+New-Item $outputPath -ItemType Directory -Force | Out-Null
+$robocopySource = (Resolve-Path $electronBuildPath).Path
+$robocopyTarget = (Resolve-Path $outputPath).Path
+& robocopy.exe $robocopySource $robocopyTarget /E /COPY:DAT /DCOPY:DAT /R:2 /W:1 /NFL /NDL /NJH /NJS /NP
+$robocopyExitCode = $LASTEXITCODE
+if ($robocopyExitCode -gt 7) {
+    throw "No fue posible copiar el paquete portable. Robocopy devolvió el código $robocopyExitCode."
+}
+$LASTEXITCODE = 0
 
 $readme = @"
 PANGEA - CONTROL DE ASISTENCIA
 
 Uso:
-1. Copia toda esta carpeta en el equipo Windows.
-2. Ejecuta Pangea.exe.
-3. Se abrirá automáticamente en el navegador.
-4. Para cerrar Pangea, usa el icono de la bandeja del sistema y selecciona Cerrar.
+1. Ejecuta Pangea.exe.
+2. La aplicación se abrirá en su ventana de escritorio.
+3. Para cerrar Pangea, utiliza la opción de salida de la aplicación.
 
-La base de datos local se encuentra en database\database.sqlite.
-No elimines la carpeta php, vendor, storage ni database.
+La aplicación utiliza la base de datos administrada por NativePHP.
+No elimines la carpeta resources ni los archivos de la aplicación.
 "@
-Set-Content (Join-Path $appPath "LEEME.txt") $readme -Encoding UTF8
+Set-Content (Join-Path $outputPath "LEEME.txt") $readme -Encoding UTF8
 
-Remove-Item $launcherPublishPath -Recurse -Force
-Write-Host "Paquete listo: $appPath"
+Write-Host "Paquete NativePHP listo: $outputPath"

@@ -36,6 +36,12 @@ try
 
     ZipFile.ExtractToDirectory(payloadPath, extractPath, overwriteFiles: true);
 
+    var packagedExecutable = Path.Combine(extractPath, "pangea.exe");
+    if (!File.Exists(packagedExecutable))
+    {
+        throw new InvalidOperationException("El paquete no contiene pangea.exe.");
+    }
+
     var databasePath = Path.Combine(installPath, "database", "database.sqlite");
     if (File.Exists(databasePath))
     {
@@ -46,6 +52,13 @@ try
 
     Directory.CreateDirectory(installPath);
     CopyDirectory(extractPath, installPath);
+
+    var installedExecutable = Path.Combine(installPath, "pangea.exe");
+    if (!File.Exists(installedExecutable))
+    {
+        throw new InvalidOperationException($"No se pudo copiar el ejecutable a {installedExecutable}.");
+    }
+
     CreateShortcut(installPath);
 
     MessageBox.Show(
@@ -56,7 +69,7 @@ try
 
     Process.Start(new ProcessStartInfo
     {
-        FileName = Path.Combine(installPath, "Pangea.exe"),
+        FileName = installedExecutable,
         WorkingDirectory = installPath,
         UseShellExecute = true,
     });
@@ -104,13 +117,14 @@ static void CreateShortcut(string installPath)
 {
     var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
     var shortcutPath = Path.Combine(desktopPath, "Pangea.lnk");
+    var executablePath = Path.Combine(installPath, "pangea.exe");
     var shellType = Type.GetTypeFromProgID("WScript.Shell")
         ?? throw new InvalidOperationException("No fue posible crear el acceso directo.");
     dynamic shell = Activator.CreateInstance(shellType)!;
     dynamic shortcut = shell.CreateShortcut(shortcutPath);
-    shortcut.TargetPath = Path.Combine(installPath, "Pangea.exe");
+    shortcut.TargetPath = executablePath;
     shortcut.WorkingDirectory = installPath;
     shortcut.Description = "Pangea - Control de asistencia";
-    shortcut.IconLocation = Path.Combine(installPath, "Pangea.exe");
+    shortcut.IconLocation = executablePath;
     shortcut.Save();
 }

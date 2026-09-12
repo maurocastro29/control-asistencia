@@ -212,14 +212,15 @@ class PermissionSeeder extends Seeder
                     $actionNames[$action] ?? ucfirst($action)
                 );
 
-            $permissionModel = Permission::firstOrCreate([
-                'name' => $permission,
-                'guard_name' => 'web',
-            ]);
-
-            $permissionModel->update([
-                'display_name' => $displayName,
-            ]);
+            Permission::firstOrCreate(
+                [
+                    'name' => $permission,
+                    'guard_name' => 'web',
+                ],
+                [
+                    'display_name' => $displayName,
+                ]
+            );
 
         }
     }

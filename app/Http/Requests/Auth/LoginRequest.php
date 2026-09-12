@@ -39,24 +39,24 @@ class LoginRequest extends FormRequest
      * @throws ValidationException
      */
     public function authenticate(): void
-{
-    $this->ensureIsNotRateLimited();
+    {
+        $this->ensureIsNotRateLimited();
 
-    if (! Auth::attempt([
-        'username'  => $this->input('username'),
-        'password'  => $this->input('password'),
-        'is_active' => true,
-    ], $this->boolean('remember'))) {
+        if (! Auth::attempt([
+            'username' => $this->input('username'),
+            'password' => $this->input('password'),
+            'is_active' => true,
+        ], $this->boolean('remember'))) {
 
-        RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey());
 
-        throw ValidationException::withMessages([
-            'username' => trans('auth.failed'),
-        ]);
+            throw ValidationException::withMessages([
+                'username' => __('auth.failed'),
+            ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
     }
-
-    RateLimiter::clear($this->throttleKey());
-}
 
     /**
      * Ensure the login request is not rate limited.
@@ -74,7 +74,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'username' => __('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),

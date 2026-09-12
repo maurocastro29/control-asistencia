@@ -149,7 +149,9 @@
                             </x-button.secondary>
 
                             <form action="{{ route('work-schedule-adjustments.complete', $adjustment) }}" method="POST"
-                                onsubmit="return confirm('¿Deseas aprobar este ajuste de jornada?')">
+                                data-confirm="¿Deseas aprobar este ajuste de jornada?"
+                                data-confirm-title="Completar ajuste"
+                                data-confirm-button="Sí, completar">
                                 @csrf
                                 <button type="submit"
                                     class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none">
@@ -157,7 +159,9 @@
                                 </button>
                             </form>
                             <form action="{{ route('work-schedule-adjustments.canceled', $adjustment) }}" method="POST"
-                                onsubmit="return confirm('¿Deseas cancelar este ajuste de jornada?')">
+                                data-confirm="¿Deseas cancelar este ajuste de jornada?"
+                                data-confirm-title="Cancelar ajuste"
+                                data-confirm-button="Sí, cancelar">
                                 @csrf
                                 <button type="submit"
                                     class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 focus:outline-none">

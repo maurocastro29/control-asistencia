@@ -11,6 +11,14 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @if (session('success') || session('error') || $errors->any())
+        <div
+            data-flash-type="{{ session('success') ? 'success' : 'error' }}"
+            data-flash-message="{{ session('success') ?? session('error') ?? $errors->first() }}"
+            hidden
+        ></div>
+    @endif
 </head>
 
 <body class="font-sans antialiased bg-gray-100">

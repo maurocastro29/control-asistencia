@@ -13,7 +13,7 @@ class DepartmentSeeder extends Seeder
      */
     public function run(): void
     {
-        Department::insert([
+        $departments = [
             [
                 'name' => 'Administración',
                 'description' => 'Área administrativa',
@@ -34,6 +34,13 @@ class DepartmentSeeder extends Seeder
                 'description' => 'Área logística',
                 'is_active' => true,
             ],
-        ]);
+        ];
+
+        foreach ($departments as $department) {
+            Department::firstOrCreate(
+                ['name' => $department['name']],
+                $department
+            );
+        }
     }
 }
