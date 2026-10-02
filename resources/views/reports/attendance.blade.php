@@ -160,20 +160,6 @@
                                     <x-table.td>
                                         {{ $record['employee']->department->name }}
                                     </x-table.td>
-                                    {{-- Estado --}}
-                                    <x-table.td>
-                                        @if ($record['status'] === 'registered')
-                                            <span
-                                                class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                                                Registrada
-                                            </span>
-                                        @else
-                                            <span
-                                                class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
-                                                Sin registrar
-                                            </span>
-                                        @endif
-                                    </x-table.td>
                                     {{-- Entrada --}}
                                     <x-table.td>
                                         {{ $record['attendance']?->entry_time?->format('H:i') ?? '—' }}
@@ -195,6 +181,20 @@
                                     <x-table.td>
                                         {{ intdiv($record['ordinary_minutes'], 60) }}h
                                         {{ $record['ordinary_minutes'] % 60 }}m
+                                    </x-table.td>
+                                    {{-- Estado --}}
+                                    <x-table.td>
+                                        @if ($record['status'] === 'registered')
+                                            <span
+                                                class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                                                Registrada
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                                                Sin registrar
+                                            </span>
+                                        @endif
                                     </x-table.td>
                                     {{-- Extra --}}
                                     <x-table.td>

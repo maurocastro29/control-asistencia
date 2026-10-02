@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('week_days', function (Blueprint $table) {
             $table->id();
-            $table->string('name',20);
-            $table->string('code',3)->unique();
+            $table->string('name', 20);
+            $table->string('code', 3)->unique();
             $table->unsignedTinyInteger('order');
             $table->boolean('is_working_day_default')->default(true);
             $table->timestamps();

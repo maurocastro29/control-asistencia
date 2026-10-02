@@ -9,7 +9,7 @@
     @endif
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <x-layout.card>
-            <div class="flex items-start justify-between gap-4">
+            <div id="roles" class="flex items-start justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-800">Roles del sistema</h3>
                     <p class="mt-1 text-sm text-slate-500">Activa o desactiva perfiles y administra sus autorizaciones.

@@ -4,9 +4,10 @@ namespace App\Exports;
 
 use App\Models\Employee;
 use App\Services\AttendanceService;
+use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class AttendanceExport implements WithMultipleSheets
+class AttendanceExport implements Export, WithMultipleSheets
 {
     public function __construct(
         private readonly array $filters,

@@ -140,6 +140,10 @@
                             de documento</a>
                     @endcan
                     @can('settings.view')
+                        <a href="{{ route('settings.index') }}#roles"
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('settings.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Roles</a>
+                    @endcan
+                    @can('settings.view')
                         <a href="{{ route('settings.index') }}"
                             class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('settings.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Configuración</a>
                     @endcan
