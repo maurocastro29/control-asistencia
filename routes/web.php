@@ -8,6 +8,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleAdjustmentController;
@@ -154,6 +155,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class)
             ->middleware('permission:users.view');
 
+    Route::resource('roles', RoleController::class)
+        ->except(['destroy']);
     Route::get('settings', [SettingController::class, 'index'])
         ->name('settings.index');
     Route::get('settings/roles/{role}/edit', [SettingController::class, 'editRole'])

@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Services\WeeklyAttendanceService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Http\Controllers\RoleController;
 
 class ReportController extends Controller
 {

@@ -117,8 +117,8 @@
             </div>
         @endcanany
 
-        @canany(['holidays.view', 'document-types.view', 'settings.view'])
-            <div x-data="{ open: {{ request()->routeIs('holidays.*', 'document-types.*', 'settings.*') ? 'true' : 'false' }} }" class="pt-3">
+        @canany(['holidays.view', 'document-types.view', 'roles.view', 'settings.view'])
+            <div x-data="{ open: {{ request()->routeIs('holidays.*', 'document-types.*', 'roles.*', 'settings.*') ? 'true' : 'false' }} }" class="pt-3">
                 <button type="button" @click="open = !open" :aria-expanded="open.toString()"
                     class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-blue-200 transition hover:bg-blue-700 hover:text-white">
                     <span>Administración</span>
@@ -139,9 +139,9 @@
                             class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('document-types.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Tipos
                             de documento</a>
                     @endcan
-                    @can('settings.view')
-                        <a href="{{ route('settings.index') }}#roles"
-                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('settings.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Roles</a>
+                    @can('roles.view')
+                        <a href="{{ route('roles.index') }}"
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('roles.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Roles</a>
                     @endcan
                     @can('settings.view')
                         <a href="{{ route('settings.index') }}"
