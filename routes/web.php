@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleAdjustmentController;
 use App\Http\Controllers\WorkScheduleController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\InactivityReasonController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -188,6 +189,7 @@ Route::middleware('auth')->group(function () {
     )->name('work-schedule-adjustments.complete');
 
     Route::resource('holidays', HolidayController::class);
+    Route::resource('inactivity-reasons', InactivityReasonController::class);
 });
 
 require __DIR__.'/auth.php';

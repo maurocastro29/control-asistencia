@@ -117,8 +117,8 @@
             </div>
         @endcanany
 
-        @canany(['holidays.view', 'document-types.view', 'roles.view', 'settings.view'])
-            <div x-data="{ open: {{ request()->routeIs('holidays.*', 'document-types.*', 'roles.*', 'settings.*') ? 'true' : 'false' }} }" class="pt-3">
+        @canany(['holidays.view', 'inactivity-reasons.view', 'document-types.view', 'roles.view', 'settings.view'])
+            <div x-data="{ open: {{ request()->routeIs('holidays.*', 'inactivity-reasons.*', 'document-types.*', 'roles.*', 'settings.*') ? 'true' : 'false' }} }" class="pt-3">
                 <button type="button" @click="open = !open" :aria-expanded="open.toString()"
                     class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-blue-200 transition hover:bg-blue-700 hover:text-white">
                     <span>Administración</span>
@@ -133,6 +133,10 @@
                     @can('holidays.view')
                         <a href="{{ route('holidays.index') }}"
                             class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('holidays.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Festivos</a>
+                    @endcan
+                    @can('inactivity-reasons.view')
+                        <a href="{{ route('inactivity-reasons.index') }}"
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('inactivity-reasons.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Motivos de inactividad</a>
                     @endcan
                     @can('document-types.view')
                         <a href="{{ route('document-types.index') }}"
