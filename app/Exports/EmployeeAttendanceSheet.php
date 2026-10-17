@@ -49,6 +49,7 @@ class EmployeeAttendanceSheet implements FromCollection, WithHeadings, WithMappi
             'H.E.F.N',
             'R.N',
             'R.N.F',
+            'Observaciones',
         ];
     }
 
@@ -73,6 +74,7 @@ class EmployeeAttendanceSheet implements FromCollection, WithHeadings, WithMappi
             $this->formatMinutes($record['hefn_minutes'] ?? 0),
             $this->formatMinutes($record['rn_minutes'] ?? 0),
             $this->formatMinutes($record['rnf_minutes'] ?? 0),
+            $attendance?->observations ?? '',
         ];
     }
 
