@@ -36,8 +36,8 @@
         @endcanany
 
         @canany(['attendance.view', 'attendance.create', 'attendance-records.view', 'work-schedules-adjustments.view',
-            'work-schedules.view'])
-            <div x-data="{ open: {{ request()->routeIs('attendance.*', 'attendance-records.*', 'work-schedule-adjustments.*', 'work-schedules.*') ? 'true' : 'false' }} }" class="pt-3">
+            'work-schedules.view', 'inactivity-days.view'])
+            <div x-data="{ open: {{ request()->routeIs('attendance.*', 'attendance-records.*', 'work-schedule-adjustments.*', 'work-schedules.*', 'inactivity-records.*', 'inactivity-days.show') ? 'true' : 'false' }} }" class="pt-3">
                 <button type="button" @click="open = !open" :aria-expanded="open.toString()"
                     class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-blue-200 transition hover:bg-blue-700 hover:text-white">
                     <span>Asistencia y jornadas</span>
@@ -58,6 +58,10 @@
                         <a href="{{ route('attendance-records.index') }}"
                             class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('attendance-records.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Historial
                             de asistencia</a>
+                    @endcan
+                    @can('inactivity-days.view')
+                        <a href="{{ route('inactivity-records.index') }}"
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('inactivity-records.*', 'inactivity-days.show') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Inactividad</a>
                     @endcan
                     @can('work-schedules-adjustments.view')
                         <a href="{{ route('work-schedule-adjustments.index') }}"
@@ -136,7 +140,8 @@
                     @endcan
                     @can('inactivity-reasons.view')
                         <a href="{{ route('inactivity-reasons.index') }}"
-                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('inactivity-reasons.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Motivos de inactividad</a>
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('inactivity-reasons.*') ? 'bg-blue-800 font-semibold text-white' : 'text-blue-100 hover:bg-blue-700' }}">Motivos
+                            de inactividad</a>
                     @endcan
                     @can('document-types.view')
                         <a href="{{ route('document-types.index') }}"

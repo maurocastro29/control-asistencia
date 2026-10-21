@@ -53,9 +53,20 @@ class EmployeeAttendanceSheet implements FromCollection, WithHeadings, WithMappi
         ];
     }
 
+    /** @param array<string, mixed> $record */
     public function map($record): array
     {
         $attendance = $record['attendance'];
+        $inactivityRecord = $record['inactivity_record'] ?? null;
+        $observations = $attendance?->observations ?? '';
+
+        if ($inactivityRecord) {
+            $observations = sprintf(
+                'Inactividad %s: %s',
+                $inactivityRecord->is_paid ? 'remunerada' : 'no remunerada',
+                $inactivityRecord->reason->name
+            );
+        }
 
         return [
             $record['employee']->full_name,
@@ -74,7 +85,7 @@ class EmployeeAttendanceSheet implements FromCollection, WithHeadings, WithMappi
             $this->formatMinutes($record['hefn_minutes'] ?? 0),
             $this->formatMinutes($record['rn_minutes'] ?? 0),
             $this->formatMinutes($record['rnf_minutes'] ?? 0),
-            $attendance?->observations ?? '',
+            $observations,
         ];
     }
 

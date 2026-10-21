@@ -45,10 +45,10 @@
         RESUMEN
         =========================== --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-            {{-- Jornadas registradas --}}
+            {{-- Días reportados --}}
             <x-layout.card>
                 <p class="text-sm font-medium text-slate-500">
-                    Jornadas registradas
+                    Días reportados
                 </p>
                 <p class="mt-2 text-2xl font-bold text-slate-800">
                     {{ $attendanceRecords->total() }}
@@ -100,7 +100,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-800">
-                        Jornadas registradas
+                        Días reportados
                     </h3>
                     <p class="text-sm text-slate-500 mt-1">
                         {{ $attendanceRecords->total() }}
@@ -188,6 +188,16 @@
                                             <span
                                                 class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                                                 Registrada
+                                            </span>
+                                        @elseif ($record['status'] === 'inactivity_paid')
+                                            <span
+                                                class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                                                Inactividad remunerada
+                                            </span>
+                                        @elseif ($record['status'] === 'inactivity_unpaid')
+                                            <span
+                                                class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                                                Inactividad no remunerada
                                             </span>
                                         @else
                                             <span

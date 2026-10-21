@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
 use App\Models\Holiday;
+use App\Models\InactivityRecord;
 use App\Models\WorkScheduleAdjustment;
 use App\Models\WorkScheduleDay;
 use Carbon\Carbon;
@@ -532,13 +533,29 @@ class AttendanceService
 
         $holidays = Holiday::query()
             ->where('is_active', true)
-            ->whereBetween('date', [
-                $calculationFrom->toDateString(),
-                $dateTo->toDateString(),
-            ])
+            ->whereDate('date', '>=', $calculationFrom->toDateString())
+            ->whereDate('date', '<=', $dateTo->toDateString())
             ->pluck('date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
             ->flip();
+        $inactivityRecords = InactivityRecord::query()
+            ->with([
+                'reason',
+                'days' => fn ($query) => $query
+                    ->whereDate('date', '>=', $calculationFrom->toDateString())
+                    ->whereDate('date', '<=', $dateTo->toDateString()),
+            ])
+            ->where('employee_id', $employee->id)
+            ->where('is_active', true)
+            ->whereHas('days', fn ($query) => $query
+                ->whereDate('date', '>=', $calculationFrom->toDateString())
+                ->whereDate('date', '<=', $dateTo->toDateString()))
+            ->get();
+        $inactivityByDate = $inactivityRecords->flatMap(
+            fn (InactivityRecord $record) => $record->days->mapWithKeys(
+                fn ($day) => [$day->date->toDateString() => $record]
+            )
+        );
 
         $report = [];
         $weeklyBudget = $employee->workSchedule?->weekly_minutes ?? 2520;
@@ -565,6 +582,49 @@ class AttendanceService
             );
 
             if ($dayRecords->isEmpty()) {
+                $inactivityRecord = $inactivityByDate->get($dateKey);
+
+                if ($inactivityRecord) {
+                    if (!$scheduleDay?->is_working_day) {
+                        continue;
+                    }
+
+                    $inactivityScheduledMinutes = $dayResult['scheduled_minutes'];
+                    $workedMinutes = $inactivityRecord->is_paid
+                        ? $inactivityScheduledMinutes
+                        : 0;
+                    $part = $this->emptyTimePart();
+                    $inactivityDayResult = $dayResult;
+                    $inactivityDayResult['scheduled_minutes'] = $inactivityScheduledMinutes;
+
+                    if ($date->greaterThanOrEqualTo($dateFrom)) {
+                        $report[] = $this->reportRow(
+                            $employee,
+                            $date,
+                            null,
+                            $scheduleDay,
+                            $inactivityDayResult,
+                            $workedMinutes,
+                            $workedMinutes,
+                            $part,
+                            $inactivityRecord
+                        );
+                    }
+
+                    $weeklyMinutesToDeduct = $holidays->has($dateKey)
+                        ? $dayResult['scheduled_minutes']
+                        : $inactivityScheduledMinutes;
+
+                    if ($inactivityRecord->is_paid || $holidays->has($dateKey)) {
+                        $weeklyBudget = max(
+                            0,
+                            $weeklyBudget - $weeklyMinutesToDeduct
+                        );
+                    }
+
+                    continue;
+                }
+
                 if ($holidays->has($dateKey)) {
                     $weeklyBudget = max(
                         0,
@@ -762,7 +822,8 @@ class AttendanceService
         array $dayResult,
         int $workedMinutes,
         int $ordinaryMinutes,
-        ?array $part = null
+        ?array $part = null,
+        ?InactivityRecord $inactivityRecord = null
     ): array {
         $part ??= $this->emptyTimePart();
         return array_merge([
@@ -774,8 +835,11 @@ class AttendanceService
             'worked_minutes' => $workedMinutes,
             'ordinary_minutes' => $ordinaryMinutes,
             'overtime_minutes' => $part['overtime_minutes'],
-            'missing_minutes' => max(0, $dayResult['scheduled_minutes'] - $dayResult['worked_minutes']),
-            'status' => $attendance ? 'registered' : 'not_registered',
+            'missing_minutes' => max(0, $dayResult['scheduled_minutes'] - $workedMinutes),
+            'inactivity_record' => $inactivityRecord,
+            'status' => $inactivityRecord
+                ? ($inactivityRecord->is_paid ? 'inactivity_paid' : 'inactivity_unpaid')
+                : ($attendance ? 'registered' : 'not_registered'),
         ], array_intersect_key($part, array_flip([
             'hed_minutes', 'hen_minutes', 'hefd_minutes', 'hefn_minutes', 'rn_minutes', 'rnf_minutes',
         ])));

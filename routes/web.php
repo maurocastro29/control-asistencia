@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\WorkScheduleAdjustmentController;
 use App\Http\Controllers\WorkScheduleController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\InactivityRecordController;
 use App\Http\Controllers\InactivityReasonController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
@@ -189,6 +190,11 @@ Route::middleware('auth')->group(function () {
     )->name('work-schedule-adjustments.complete');
 
     Route::resource('holidays', HolidayController::class);
+    Route::resource('inactivity-records', InactivityRecordController::class)
+        ->except(['show'])
+        ->parameters(['inactivity-records' => 'inactivityRecord']);
+    Route::get('inactivity-days/{inactivityRecord}', [InactivityRecordController::class, 'show'])
+        ->name('inactivity-days.show');
     Route::resource('inactivity-reasons', InactivityReasonController::class);
 });
 

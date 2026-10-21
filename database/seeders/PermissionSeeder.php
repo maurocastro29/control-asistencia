@@ -148,6 +148,16 @@ class PermissionSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
+            | Inactivity Days
+            |--------------------------------------------------------------------------
+            */
+            'inactivity-days.view',
+            'inactivity-days.create',
+            'inactivity-days.edit',
+            'inactivity-days.delete',
+
+            /*
+            |--------------------------------------------------------------------------
             | Work Schedules adjustments
             |--------------------------------------------------------------------------
             */
@@ -188,6 +198,7 @@ class PermissionSeeder extends Seeder
             'attendance-records' => 'Historial de asistencia',
             'holidays' => 'Festivos',
             'inactivity-reasons' => 'Motivos de inactividad',
+            'inactivity-days' => 'Días de inactividad',
             'work-schedules-adjustments' => 'Ajustes de jornada',
             'reports' => 'Reportes',
             'settings' => 'Configuración',

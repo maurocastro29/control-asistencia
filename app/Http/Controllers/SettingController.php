@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SettingController extends Controller
@@ -31,6 +32,7 @@ class SettingController extends Controller
             ->get();
 
         $permissions = Permission::query()
+            ->where('guard_name', 'web')
             ->orderBy('display_name')
             ->orderBy('name')
             ->get()
@@ -44,6 +46,7 @@ class SettingController extends Controller
         $role->load('permissions');
 
         $permissions = Permission::query()
+            ->where('guard_name', $role->guard_name)
             ->orderBy('display_name')
             ->orderBy('name')
             ->get()
@@ -56,7 +59,11 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'permission_ids' => ['nullable', 'array'],
-            'permission_ids.*' => ['integer', 'exists:permissions,id'],
+            'permission_ids.*' => [
+                'integer',
+                Rule::exists('permissions', 'id')
+                    ->where('guard_name', $role->guard_name),
+            ],
         ]);
 
         $permissionIds = collect($validated['permission_ids'] ?? []);
